@@ -10,7 +10,6 @@
 #define LCD_D6  26               //Data pin D6
 #define LCD_D7  27               //Data pin D7
 
-
 // Botões 
 #define BUTTON_1 19
 #define BUTTON_2 23
@@ -20,39 +19,42 @@ int lcd;
 int cont = 0x30;
 
 int menuOption = 0;
-int AvailableSensors = 0;
+int availableSensors = 0;
 
 // Flags de parada
 int stopMain = 0;
 int stopLoopInterval = 0;
 int stopLoopSensors = 0;
-
-
+	
 int timeInterval = 1;
 
+// Debounce
 void isPressed(int btt, void (*function)(void)){
 	if(digitalRead(btt) == 0){
 		delay(65);
 		if(digitalRead(btt) == 0){
 			function();
 			while(digitalRead(btt) == 0);
+			delay(10);
 		}
 	} 	
-	
 }
 
+// Ir para a proxima opção do menu principal
 void nextOption(){
 	if(menuOption < 6){
 		menuOption++;
 	}
 }
 
+// Voltar para a opção anterior do menu principal
 void prevOption(){
 	if(menuOption > 1){
 		menuOption--;
 	}
 }
 
+//Encerrar o sistema
 void exitLoop(){
 	lcdClear(lcd);
 	lcdPuts(lcd,"     SAINDO     ");
@@ -61,22 +63,45 @@ void exitLoop(){
 	stopMain = 1;
 }
 
+// Aumentar o tempo do intervalo
 void incrementInterval(){
 	if(timeInterval < 10){
 		timeInterval++;
 	}
 }
 
+// Diminuir o tempo do intervalo
 void decrementInterval(){
 	if(timeInterval > 1){
 		timeInterval--;
 	}
 }
 
+// Finalizar o ajuste do intervalo
 void exitIntervalAdjustment(){
 	stopLoopInterval = 1;
 }
 
+// ver proximo sensor
+void decrementAiavailableSensors(){
+	if(availableSensors > 0){
+		availableSensors--;
+	}
+}
+
+// Ver sensor anterior
+void incrementAiavailableSensors(){
+	if(availableSensors < 7){
+		availableSensors++;
+	}
+}
+
+// Finalizar loop dos sensores
+void exitLoopSensors(){
+	stopLoopSensors = 1;
+}
+
+// Ajustar o intervalo de tempo em que os sensores serão atualizados
 void setTimeInterval(){
 	lcdClear(lcd);
 	lcdPuts(lcd,"   INTERVALO    ");
@@ -86,7 +111,6 @@ void setTimeInterval(){
 		for(int i=1;i <=timeInterval; i++){
 			lcdPutchar(lcd,0xFF);
 		}
-		
 		
 		for(int aux = timeInterval; aux < 10; aux++){
 			lcdPuts(lcd," ");
@@ -101,35 +125,85 @@ void setTimeInterval(){
 	lcdClear(lcd);
 }
 
+
 void sensors(){
 	while(!stopLoopSensors){
 		switch(availableSensors){
 			case 0:
-				lcdPuts("SENSOR D0");
+				lcdHome(lcd);
+				lcdPuts(lcd,"    SENSOR D0   ");
+				lcdPosition(lcd,0,1);
+				lcdPuts(lcd,"      sinal     ");
+				isPressed(BUTTON_2,incrementAiavailableSensors);
+				isPressed(BUTTON_1,decrementAiavailableSensors);
+				isPressed(BUTTON_3,exitLoopSensors);
 				break;
 			case 1:
-				lcdPuts("SENSOR D1");
+				lcdHome(lcd);
+				lcdPuts(lcd,"    SENSOR D1   ");
+				lcdPosition(lcd,0,1);
+				lcdPuts(lcd,"      sinal     ");
+				isPressed(BUTTON_2,incrementAiavailableSensors);
+				isPressed(BUTTON_1,decrementAiavailableSensors);
+				isPressed(BUTTON_3,exitLoopSensors);
 				break;
 			case 2:
-				lcdPuts("SENSOR D2");
+			    lcdHome(lcd);
+				lcdPuts(lcd,"    SENSOR D2   ");
+				lcdPosition(lcd,0,1);
+				lcdPuts(lcd,"      sinal     ");
+				isPressed(BUTTON_2,incrementAiavailableSensors);
+				isPressed(BUTTON_1,decrementAiavailableSensors);
+				isPressed(BUTTON_3,exitLoopSensors);
 				break;
 			case 3:
-				lcdPuts("SENSOR D3");
+				lcdHome(lcd);
+				lcdPuts(lcd,"    SENSOR D3   ");
+				lcdPosition(lcd,0,1);
+				lcdPuts(lcd,"      sinal     ");
+				isPressed(BUTTON_2,incrementAiavailableSensors);
+				isPressed(BUTTON_1,decrementAiavailableSensors);
+				isPressed(BUTTON_3,exitLoopSensors);
 				break;
 			case 4:
-				lcdPuts("SENSOR D4");
+				lcdHome(lcd);
+				lcdPuts(lcd,"    SENSOR D4   ");
+				lcdPosition(lcd,0,1);
+				lcdPuts(lcd,"      sinal     ");
+				isPressed(BUTTON_2,incrementAiavailableSensors);
+				isPressed(BUTTON_1,decrementAiavailableSensors);
+				isPressed(BUTTON_3,exitLoopSensors);
 				break;
 			case 5:
-				lcdPuts("SENSOR D5");
+				lcdHome(lcd);
+				lcdPuts(lcd,"    SENSOR D5   ");
+				lcdPosition(lcd,0,1);
+				lcdPuts(lcd,"      sinal     ");
+				isPressed(BUTTON_2,incrementAiavailableSensors);
+				isPressed(BUTTON_1,decrementAiavailableSensors);
+				isPressed(BUTTON_3,exitLoopSensors);
 				break;
 			case 6:
-				lcdPuts("SENSOR D6");
+				lcdHome(lcd);
+				lcdPuts(lcd,"    SENSOR D6   ");
+				lcdPosition(lcd,0,1);
+				lcdPuts(lcd,"      sinal     ");
+				isPressed(BUTTON_2,incrementAiavailableSensors);
+				isPressed(BUTTON_1,decrementAiavailableSensors);
+				isPressed(BUTTON_3,exitLoopSensors);
 				break;
 			case 7:
-				lcdPuts("SENSOR D7");
+				lcdHome(lcd);
+				lcdPuts(lcd,"    SENSOR D7   ");
+				lcdPosition(lcd,0,1);
+				lcdPuts(lcd,"      sinal     ");
+				isPressed(BUTTON_2,incrementAiavailableSensors);
+				isPressed(BUTTON_1,decrementAiavailableSensors);
+				isPressed(BUTTON_3,exitLoopSensors);
 				break;
 		}
 	}
+	stopLoopSensors = 0;
 }
 
 int main()
@@ -158,7 +232,7 @@ int main()
 			lcdPuts(lcd,"                ");
 			isPressed(BUTTON_2,nextOption);
 			isPressed(BUTTON_1,prevOption);
-			isPressed(BUTTON_3,
+			isPressed(BUTTON_3,sensors);
 			break;
 		case 2:
 			lcdHome(lcd);
