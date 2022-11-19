@@ -87,7 +87,7 @@ void exitLoopSensors(){
 }
 
 // Ajustar o intervalo de tempo em que os sensores serão atualizados
-void timeIntervalMenu(){
+void setTimeInterval(){
 	lcdClear(lcd);
 	lcdPuts(lcd,"   INTERVALO    ");
 	while(!stopLoopIntervalMenu){
@@ -102,9 +102,8 @@ void timeIntervalMenu(){
 		}
 		
 		lcdPrintf(lcd,"10%c ",timeUnit);
-		isPressed(BUTTON_2,incrementInterval);
-		isPressed(BUTTON_1,decrementInterval);
-		isPressed(BUTTON_3,exitIntervalAdjustment);
+		isPressed(BUTTON_2,increment,&timeInterval,10);
+		isPressed(BUTTON_1,decrement,&timeInterval,1);
 	}
 	stopLoopIntervalMenu = 0;
 	lcdClear(lcd);
