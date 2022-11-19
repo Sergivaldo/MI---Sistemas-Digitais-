@@ -29,11 +29,11 @@ int stopLoopSensors = 0;
 int timeInterval = 1;
 
 // Debounce
-void isPressed(int btt, void (*function)(void)){
+void isPressed(int btt, void (*function)(int*,int),int* controller, int minMax){
 	if(digitalRead(btt) == 0){
 		delay(65);
 		if(digitalRead(btt) == 0){
-			function();
+			function(controller, minMax);
 			while(digitalRead(btt) == 0);
 			delay(10);
 		}
@@ -41,16 +41,16 @@ void isPressed(int btt, void (*function)(void)){
 }
 
 // Ir para a proxima opção do menu principal
-void nextOption(){
-	if(menuOption < 6){
-		menuOption++;
+void increment(int* controller, int max){
+	if(*controller < max){
+		*controller++;
 	}
 }
 
 // Voltar para a opção anterior do menu principal
-void prevOption(){
-	if(menuOption > 1){
-		menuOption--;
+void decrement(int* controller, int min){
+	if(*controller > min){
+		*controller++;
 	}
 }
 
@@ -63,37 +63,9 @@ void exitLoop(){
 	stopMain = 1;
 }
 
-// Aumentar o tempo do intervalo
-void incrementInterval(){
-	if(timeInterval < 10){
-		timeInterval++;
-	}
-}
-
-// Diminuir o tempo do intervalo
-void decrementInterval(){
-	if(timeInterval > 1){
-		timeInterval--;
-	}
-}
-
 // Finalizar o ajuste do intervalo
 void exitIntervalAdjustment(){
 	stopLoopInterval = 1;
-}
-
-// ver proximo sensor
-void decrementAiavailableSensors(){
-	if(availableSensors > 0){
-		availableSensors--;
-	}
-}
-
-// Ver sensor anterior
-void incrementAiavailableSensors(){
-	if(availableSensors < 7){
-		availableSensors++;
-	}
 }
 
 // Finalizar loop dos sensores
