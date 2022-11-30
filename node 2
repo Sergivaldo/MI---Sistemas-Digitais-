@@ -7,13 +7,26 @@
 
 String address = "";
 
+#ifndef STASSID
+#define STASSID "INTELBRAS"             // nome da rede WiFi
+#define STAPSK  "Pbl-Sistemas-Digitais" // Senha da rede WiFi
+#endif
+
+// Nome do ESP na rede
+const char* host = "ESP-10.0.0.109";
+
 //WiFi
-const char* SSID = "";                 // SSID / nome da rede WiFi que deseja se conectar
-const char* PASSWORD = "";  // Senha da rede WiFi que deseja se conectar
+const char* SSID = "INTELBRAS";                 // SSID / nome da rede WiFi que deseja se conectar
+const char* PASSWORD = "Pbl-Sistemas-Digitais";  // Senha da rede WiFi que deseja se conectar
 WiFiClient wifiClient;
 
+// Definições de rede
+IPAddress local_IP(10, 0, 0, 109);
+IPAddress gateway(10, 0, 0, 1);
+IPAddress subnet(255, 255, 0, 0);
+
 //MQTT Server
-const char* BROKER_MQTT = "broker.emqx.io";  //URL do broker MQTT que se deseja utilizar
+const char* BROKER_MQTT = "tcp://10.0.0.101";  //URL do broker MQTT que se deseja utilizar
 int BROKER_PORT = 1883;                      // Porta do Broker MQTT
 
 #define ID_MQTT "TP04/G03"  //Informe um ID unico e seu. Caso sejam usados IDs repetidos a ultima conexão irá sobrepor a anterior.
@@ -57,37 +70,48 @@ void connectMQTT();     //Faz conexão com Broker MQTT
 void receivePackage(char* topic, byte* payload, unsigned int length);
 
 void getDigitalValue(String addr) {
-  String value;
+  int value;
+  char *buf;
   if (addr == "D0") {
-    value = String(digitalRead(D0));
-    MQTT.publish(DIGITAL_SENSOR, value);
+    value = digitalRead(D0);
+    sprintf(buf,"%d",value);
+    MQTT.publish(DIGITAL_SENSOR, buf);
   } else if (addr == "D1") {
-    value = String(digitalRead(D1));
-    MQTT.publish(DIGITAL_SENSOR, value);
+    value = digitalRead(D1);
+    sprintf(buf,"%d",value);
+    MQTT.publish(DIGITAL_SENSOR, buf);
   } else if (addr == "D2") {
-    value = String(digitalRead(D2));
-    MQTT.publish(DIGITAL_SENSOR, value);
+    value = digitalRead(D2);
+    sprintf(buf,"%d",value);
+    MQTT.publish(DIGITAL_SENSOR, buf);
   } else if (addr == "D3") {
-    value = String(digitalRead(D3));
-    MQTT.publish(DIGITAL_SENSOR, value);
+    value = digitalRead(D3);
+    sprintf(buf,"%d",value);
+    MQTT.publish(DIGITAL_SENSOR, buf);
   } else if (addr == "D4") {
-    value = String(digitalRead(D4));
-    MQTT.publish(DIGITAL_SENSOR, value);
+    value = digitalRead(D4);
+    sprintf(buf,"%d",value);
+    MQTT.publish(DIGITAL_SENSOR, buf);
   } else if (addr == "D5") {
-    value = String(digitalRead(D5));
-    MQTT.publish(DIGITAL_SENSOR, value);
+    value = digitalRead(D5);
+    sprintf(buf,"%d",value);
+    MQTT.publish(DIGITAL_SENSOR, buf);
   } else if (addr == "D6") {
-    value = String(digitalRead(D6));
-    MQTT.publish(DIGITAL_SENSOR, value);
+    value = digitalRead(D6);
+    sprintf(buf,"%d",value);
+    MQTT.publish(DIGITAL_SENSOR, buf);
   } else if (addr == "D7") {
-    value = String(digitalRead(D7));
-    MQTT.publish(DIGITAL_SENSOR, value);
+    value = digitalRead(D7);
+    sprintf(buf,"%d",value);
+    MQTT.publish(DIGITAL_SENSOR, buf);
   }
 }
 
 void getAnalogValue() {
-  String value = String(analogRead(A0));
-  MQTT.publish(ANALOG_SENSOR, value);
+    int value = analogRead(A0);
+    char *buf;
+    sprintf(buf,"%f",value);
+    MQTT.publish(ANALOG_SENSOR, buf);
 }
 
 // Configurações para realizar o upload do código via wifi
@@ -101,7 +125,7 @@ void OTA_setup(){
     Serial.println("STA Failed to configure");
   }
   WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
+  WiFi.begin(SSID, PASSWORD);
   while (WiFi.waitForConnectResult() != WL_CONNECTED) {
     Serial.println("Connection Failed! Rebooting...");
     delay(5000);
@@ -197,7 +221,7 @@ void setup() {
   Serial.begin(115200);
   connectWifi();
   MQTT.setServer(BROKER_MQTT, BROKER_PORT);
-  MQTT.setCallback(recebePacote);
+  MQTT.setCallback(receivePackage);
 }
 
 void loop() {
