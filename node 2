@@ -185,7 +185,7 @@ void connectMQTT() {
   while (!MQTT.connected()) {
     Serial.print("Conectando ao Broker MQTT: ");
     Serial.println(BROKER_MQTT);
-    if (MQTT.connect(ID_MQTT)) {
+    if (MQTT.connect(ID_MQTT,["aluno","@luno*123"])) {
       Serial.println("Conectado ao Broker com sucesso!");
       MQTT.subscribe(REQUEST);
       MQTT.subscribe(ADDRESS);
