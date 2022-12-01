@@ -10,7 +10,7 @@
 * Defines
 */
 /* Caso desejar utilizar outro broker MQTT, substitua o endereco abaixo */
-#define MQTT_ADDRESS   "tcp://10.0.0.101"
+#define MQTT_ADDRESS   "tcp://10.0.0.101:1883"
 /* Substitua este por um ID unico em sua aplicacao */
 #define CLIENTID       "MQTTCClientID"  
 #define USERNAME "aluno"
