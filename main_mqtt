@@ -3,12 +3,13 @@
 #include <string.h>
 #include "MQTTClient.h"
 
-#define BROKER_ADDRESS     "tcp://broker.hivemq.com:1883"
-#define USERNAME "user"
-#define PASSWORD "030601"
+#define BROKER_ADDRESS     "tcp://10.0.0.101:1883"
+#define USERNAME "aluno"
+#define PASSWORD "@luno*123"
 
 #define CLIENTID    "R-TP04/G03"
-#define QOS         1
+#define QOS1         1
+#define QOS2         2
 #define TIMEOUT     5000L
 
 // Comandos de requisição
@@ -76,7 +77,7 @@ void send(char* topic, char* payload) {
     MQTTClient_message pubmsg = MQTTClient_message_initializer;
     pubmsg.payload = payload;
     pubmsg.payloadlen = strlen(pubmsg.payload);
-    pubmsg.qos = QOS;
+    pubmsg.qos = QOS2;
     pubmsg.retained = 0;
     MQTTClient_deliveryToken token;
     MQTTClient_publishMessage(client, topic, &pubmsg, &token);
@@ -89,8 +90,8 @@ int main(int argc, char* argv[])
     int ch;
     MQTTClient_connectOptions conn_opts = MQTTClient_connectOptions_initializer;
 
-    //conn_opts.username = USERNAME;
-    //conn_opts.password = PASSWORD;
+    conn_opts.username = USERNAME;
+    conn_opts.password = PASSWORD;
     
     MQTTClient_create(&client, BROKER_ADDRESS, CLIENTID,
         MQTTCLIENT_PERSISTENCE_NONE, NULL);
@@ -105,26 +106,26 @@ int main(int argc, char* argv[])
     }
 
     printf("Pressione Q<Enter> para sair\n\n");
-    MQTTClient_subscribe(client, RESPONSE, QOS);
-	MQTTClient_subscribe(client, ANALOG_SENSOR, QOS);
-	MQTTClient_subscribe(client, DIGITAL_SENSOR, QOS);
+    MQTTClient_subscribe(client, RESPONSE, QOS2);
+    MQTTClient_subscribe(client, ANALOG_SENSOR, QOS2);
+    MQTTClient_subscribe(client, DIGITAL_SENSOR, QOS2);
     do
     {
         ch = getchar();
         switch(ch){
-            case '1':
-                send(REQUEST,SET_ON_NODEMCU_LED);
-                break;
-            case '2':
-                send(REQUEST,SET_OFF_NODEMCU_LED);
-                break;
-			case '3':
-				send(REQUEST,GET_ANALOG_INPUT_VALUE);
-				break;
-			case '4':
-				send(ADDRESS,ADDR_D0);
-				send(REQUEST,GET_DIGITAL_INPUT_VALUE);
-				break;
+		case '1':
+			send(REQUEST,SET_ON_NODEMCU_LED);
+			break;
+		case '2':
+			send(REQUEST,SET_OFF_NODEMCU_LED);
+			break;
+		case '3':
+			send(REQUEST,GET_ANALOG_INPUT_VALUE);
+			break;
+		case '4':
+			send(ADDRESS,ADDR_D0);
+			send(REQUEST,GET_DIGITAL_INPUT_VALUE);
+			break;
 
         }
         
