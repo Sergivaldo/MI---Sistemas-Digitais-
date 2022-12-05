@@ -158,7 +158,7 @@ void receivePackage(char* topic, byte* payload, unsigned int length) {
 }
 
 void getDigitalValue(String addr) {
-  int value;
+  byte value;
   char *buf;
   if (addr == "D0") {
     value = digitalRead(D0);
@@ -196,9 +196,9 @@ void getDigitalValue(String addr) {
 }
 
 void getAnalogValue() {
-    int value = analogRead(A0);
+    double value = analogRead(A0);
     char *buf;
-    sprintf(buf,"%f",value);
+    dtostrf(value, 4, 2, buf);
     MQTT.publish(ANALOG_SENSOR, buf);
 }
 
