@@ -5,20 +5,25 @@
 #include <PubSubClient.h>
 
 //Definicoes
+//#ifndef STASSID
+//#define STASSID "Nina"
+//#define STAPSK  "paralelogramo01"
+//#endif
+
 #ifndef STASSID
-#define STASSID "Nina"
-#define STAPSK  "paralelogramo01"
+#define STASSID "INTELBRAS"
+#define STAPSK  "Pbl-Sistemas-Digitais"
 #endif
 
 //Constantes e variaveis
 const char* ssid = STASSID;
 const char* password = STAPSK;
 
-const char* mqtt_server = "broker.hivemq.com";
+const char* mqtt_server = "10.0.0.101";
 const char *mqtt_username = "aluno";
 const char *mqtt_password = "@luno*123";
 
-String address = "";
+String address = "D0";
 // Comandos de resposta
 
 #define ANALOG_INPUT_VALUE "0x01"
@@ -44,19 +49,17 @@ String address = "";
 
 // Endereço pino
 
-#define ADDR_D0 "0xD0"
-#define ADDR_D1 "0xD1"
-#define ADDR_D2 "0xD2"
-#define ADDR_D3 "0xD3"
-#define ADDR_D4 "0xD4"
-#define ADDR_D5 "0xD5"
-#define ADDR_D6 "0xD6"
-#define ADDR_D7 "0xD7"
+#define ADDR_D0 "D0"
+#define ADDR_D1 "D1"
+#define ADDR_D2 "D2"
+#define ADDR_D3 "D3"
+#define ADDR_D4 "D4"
+#define ADDR_D5 "D5"
+#define ADDR_D6 "D6"
+#define ADDR_D7 "D7"
 
 WiFiClient espClient;
 PubSubClient MQTT(espClient);
-const char* topicVoltage = "LEDS/voltage";
-
 
 void connectWifi_OTA(){
   Serial.begin(9600);
@@ -110,10 +113,11 @@ void connectWifi_OTA(){
 void reconnect_MQTT(){
   Serial.print("Attempting MQTT connection...");
   String clientId = "TP04/G03";
-  if (MQTT.connect(clientId.c_str())) {
+  if (MQTT.connect(clientId.c_str(),mqtt_username,mqtt_password)) {
     Serial.println("connected");
     MQTT.subscribe(REQUEST);
     MQTT.subscribe(ADDRESS);
+    MQTT.publish(RESPONSE,"node conectada");
   } else {
     Serial.print("failed, rc=");
     Serial.print(MQTT.state());
@@ -147,9 +151,7 @@ void receivePackage(char* topic, byte* payload, unsigned int length) {
       getAnalogValue();
     }
   } else if (strcmp(topic, ADDRESS) == 0) {
-    if (msg.length() == 2) {
       address = msg;
-    }
   }
 
   Serial.print("Mensagem recebida: ");
@@ -158,47 +160,47 @@ void receivePackage(char* topic, byte* payload, unsigned int length) {
 }
 
 void getDigitalValue(String addr) {
-  byte value;
-  char *buf;
+  int value;
+  char buf[4];
   if (addr == "D0") {
     value = digitalRead(D0);
-    sprintf(buf,"%d",value);
+    snprintf(buf,4,"%ld",value);
     MQTT.publish(DIGITAL_SENSOR, buf);
   } else if (addr == "D1") {
     value = digitalRead(D1);
-    sprintf(buf,"%d",value);
+    snprintf(buf,4,"%ld",value);
     MQTT.publish(DIGITAL_SENSOR, buf);
   } else if (addr == "D2") {
     value = digitalRead(D2);
-    sprintf(buf,"%d",value);
+    snprintf(buf,4,"%ld",value);
     MQTT.publish(DIGITAL_SENSOR, buf);
   } else if (addr == "D3") {
     value = digitalRead(D3);
-    sprintf(buf,"%d",value);
+    snprintf(buf,4,"%ld",value);
     MQTT.publish(DIGITAL_SENSOR, buf);
   } else if (addr == "D4") {
     value = digitalRead(D4);
-    sprintf(buf,"%d",value);
+    snprintf(buf,4,"%ld",value);
     MQTT.publish(DIGITAL_SENSOR, buf);
   } else if (addr == "D5") {
     value = digitalRead(D5);
-    sprintf(buf,"%d",value);
+    snprintf(buf,4,"%ld",value);
     MQTT.publish(DIGITAL_SENSOR, buf);
   } else if (addr == "D6") {
     value = digitalRead(D6);
-    sprintf(buf,"%d",value);
+    snprintf(buf,4,"%ld",value);
     MQTT.publish(DIGITAL_SENSOR, buf);
   } else if (addr == "D7") {
     value = digitalRead(D7);
-    sprintf(buf,"%d",value);
+    snprintf(buf,4,"%ld",value);
     MQTT.publish(DIGITAL_SENSOR, buf);
   }
 }
 
 void getAnalogValue() {
-    double value = analogRead(A0);
-    char *buf;
-    dtostrf(value, 4, 2, buf);
+    int value = analogRead(A0);
+    char buf[5];
+    snprintf(buf,5,"%ld",value);
     MQTT.publish(ANALOG_SENSOR, buf);
 }
 
@@ -215,5 +217,6 @@ void loop() {
   if(!MQTT.connected()){
     reconnect_MQTT();
   }
+  ArduinoOTA.handle();
   MQTT.loop();
 }
