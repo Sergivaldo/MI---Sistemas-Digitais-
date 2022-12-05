@@ -3,67 +3,36 @@
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 #include <PubSubClient.h>
-#include <string.h>
 
+//Definicoes
 #ifndef STASSID
-#define STASSID "INTELBRAS"
-#define STAPSK  "Pbl-Sistemas-Digitais"
+#define STASSID "Nina"
+#define STAPSK  "paralelogramo01"
 #endif
 
-// Comandos de resposta
-
-#define PROBLEM_NODEMCU 0x1F
-#define NO_PROBLEM_NODEMCU 0x00
-#define ANALOG_INPUT_VALUE 0x01
-#define DIGITAL_INPUT_VALUE 0x02
-#define LED_ON 0x03
-#define LED_OFF 0x04
-
-// Endereço pino
-
-#define ADDR_D0 0xD0
-#define ADDR_D1 0xD1
-#define ADDR_D2 0xD2
-#define ADDR_D3 0xD3
-#define ADDR_D4 0xD4
-#define ADDR_D5 0xD5
-#define ADDR_D6 0xD6
-#define ADDR_D7 0xD7
-
-// Definições de rede
-IPAddress local_IP(10, 0, 0, 108);
-IPAddress gateway(10, 0, 0, 1);
-IPAddress subnet(255, 255, 0, 0);
-
-// Nome do ESP na rede
-const char* host = "ESP-10.0.0.108";
+//Constantes e variaveis
 const char* ssid = STASSID;
 const char* password = STAPSK;
 
-//WiFi
-const char* SSID = "INTELBRAS";                 // SSID / nome da rede WiFi que deseja se conectar
-const char* PASSWORD = "Pbl-Sistemas-Digitais";  // Senha da rede WiFi que deseja se conectar
-WiFiClient wifiClient;
-
-//MQTT Server
-const char* BROKER_MQTT = "tcp://10.0.0.101";  //URL do broker MQTT que se deseja utilizar
-int BROKER_PORT = 1883;                      // Porta do Broker MQTT
-
-#define ID_MQTT "TP04/G03"  //Informe um ID unico e seu. Caso sejam usados IDs repetidos a ultima conexão irá sobrepor a anterior.
+const char* mqtt_server = "broker.hivemq.com";
+const char *mqtt_username = "aluno";
+const char *mqtt_password = "@luno*123";
 
 String address = "";
+// Comandos de resposta
 
-// Protocolos de requisição 
+#define ANALOG_INPUT_VALUE "0x01"
+#define DIGITAL_INPUT_VALUE "0x02"
+#define LED_ON "0x03"
+#define LED_OFF "0x04"
+#define NODE_OK "0x200"
+
+// Comandos de requisição
 #define GET_ANALOG_INPUT_VALUE "0x04"
 #define GET_DIGITAL_INPUT_VALUE "0x05"
 #define SET_ON_NODEMCU_LED "0x06"
 #define SET_OFF_NODEMCU_LED "0x07"
 #define GET_NODE_CONNECTION_STATUS "0x08"
-
-// Protocolos de resposta
-#define NODE_OK "200"
-#define LED_OFF "0x03"
-#define LED_ON "0x04"
 
 // Definições dos tópicos
 #define ANALOG_SENSOR "tp04/g03/node/analog-sensor/value"
@@ -73,54 +42,34 @@ String address = "";
 #define ADDRESS "tp04/g03/node/digital-sensor/address"
 #define NODE_CONNECTION_STATUS "tp04/g03/node/status"
 
-// Endereços dos sensores digitais
-#define SENSOR_D0 "D0"
-#define SENSOR_D1 "D1"
-#define SENSOR_D2 "D2"
-#define SENSOR_D3 "D3"
-#define SENSOR_D4 "D4"
-#define SENSOR_D5 "D5"
-#define SENSOR_D6 "D6"
-#define SENSOR_D7 "D7"
+// Endereço pino
 
-PubSubClient MQTT(wifiClient);  // Instancia o Cliente MQTT passando o objeto espClient
+#define ADDR_D0 "0xD0"
+#define ADDR_D1 "0xD1"
+#define ADDR_D2 "0xD2"
+#define ADDR_D3 "0xD3"
+#define ADDR_D4 "0xD4"
+#define ADDR_D5 "0xD5"
+#define ADDR_D6 "0xD6"
+#define ADDR_D7 "0xD7"
 
-//Declaração das Funções
-void keepsConnections();  //Garante que as conexoes com WiFi e MQTT Broker se mantenham ativas
-void connectWiFi();     //Faz conexão com WiFi
-void connectMQTT();     //Faz conexão com Broker MQTT
-void receivePackage(char* topic, byte* payload, unsigned int length);
+WiFiClient espClient;
+PubSubClient MQTT(espClient);
+const char* topicVoltage = "LEDS/voltage";
 
-// Configurações para realizar o upload do código via wifi
-void OTA_setup(){
-  
-  Serial.begin(115200);
+
+void connectWifi_OTA(){
+  Serial.begin(9600);
+  delay(10);
   Serial.println("Booting");
-
-  // Configuração do IP fixo no roteador, se não conectado, imprime mensagem de falha
-  if (!WiFi.config(local_IP, gateway, subnet)) {
-    Serial.println("STA Failed to configure");
-  }
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   while (WiFi.waitForConnectResult() != WL_CONNECTED) {
     Serial.println("Connection Failed! Rebooting...");
     delay(5000);
-    ESP.restart();
-  }
+    ESP.restart();}
 
-  // Port defaults to 8266
-  // ArduinoOTA.setPort(8266);
-
-  // Hostname defaults to esp8266-[ChipID]
-  ArduinoOTA.setHostname(host);
-
-  // No authentication by default
-  // ArduinoOTA.setPassword("admin");
-
-  // Password can be set with it's md5 value as well
-  // MD5(admin) = 21232f297a57a5a743894a0e4a801fc3
-  // ArduinoOTA.setPasswordHash("21232f297a57a5a743894a0e4a801fc3");
+  ArduinoOTA.setHostname("ESP-10.0.0.108");
 
   ArduinoOTA.onStart([]() {
     String type;
@@ -130,7 +79,6 @@ void OTA_setup(){
       type = "filesystem";
     }
 
-    // NOTE: if updating FS this would be the place to unmount FS using FS.end()
     Serial.println("Start updating " + type);
   });
   ArduinoOTA.onEnd([]() {
@@ -156,44 +104,21 @@ void OTA_setup(){
   ArduinoOTA.begin();
   Serial.println("Ready");
   Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());  
+  Serial.println(WiFi.localIP());
 }
 
-//Faz conexão com WiFi
-void connectWifi(){
-    if (WiFi.status() == WL_CONNECTED) {
-        return;
-    }
-        
-    Serial.print("Conectando-se na rede: ");
-    Serial.print(STASSID);
-    Serial.println("  Aguarde!");
-    WiFi.begin(STASSID, STAPSK); // Conecta na rede WI-FI  
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(100);
-        Serial.print(".");
-    }
-    
-    Serial.println();
-    Serial.print("Conectado com sucesso, na rede: ");
-    Serial.print(STASSID);  
-    Serial.print("  IP obtido: ");
-    Serial.println(WiFi.localIP()); 
-}
-
-void connectMQTT() {
-  while (!MQTT.connected()) {
-    Serial.print("Conectando ao Broker MQTT: ");
-    Serial.println(BROKER_MQTT);
-    if (MQTT.connect(ID_MQTT,["aluno","@luno*123"])) {
-      Serial.println("Conectado ao Broker com sucesso!");
-      MQTT.subscribe(REQUEST);
-      MQTT.subscribe(ADDRESS);
-    } else {
-      Serial.println("Noo foi possivel se conectar ao broker.");
-      Serial.println("Nova tentatica de conexao em 10s");
-      delay(10000);
-    }
+void reconnect_MQTT(){
+  Serial.print("Attempting MQTT connection...");
+  String clientId = "TP04/G03";
+  if (MQTT.connect(clientId.c_str())) {
+    Serial.println("connected");
+    MQTT.subscribe(REQUEST);
+    MQTT.subscribe(ADDRESS);
+  } else {
+    Serial.print("failed, rc=");
+    Serial.print(MQTT.state());
+    Serial.println(" try again in 5 seconds");
+    delay(2000);
   }
 }
 
@@ -215,7 +140,7 @@ void receivePackage(char* topic, byte* payload, unsigned int length) {
       digitalWrite(LED_BUILTIN, HIGH);
       MQTT.publish(RESPONSE, LED_OFF);
     } else if (msg == GET_NODE_CONNECTION_STATUS) {
-      MQTT.publish(NODE_CONNECTION_STATUS,NODE_OK );
+      MQTT.publish(NODE_CONNECTION_STATUS,NODE_OK);
     } else if (msg == GET_DIGITAL_INPUT_VALUE) {
       getDigitalValue(address);
     } else if (msg == GET_ANALOG_INPUT_VALUE){
@@ -278,15 +203,17 @@ void getAnalogValue() {
 }
 
 void setup() {
-  pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(LED_BUILTIN,OUTPUT);
   digitalWrite(LED_BUILTIN,HIGH);
-  OTA_setup();
-  MQTT.setServer(BROKER_MQTT, BROKER_PORT);
+  connectWifi_OTA();
+  MQTT.setServer(mqtt_server, 1883);
   MQTT.setCallback(receivePackage);
-}
   
+}
+
 void loop() {
-  MQTT.publish(REQUEST,SET_ON_NODEMCU_LED); 
-  ArduinoOTA.handle();
+  if(!MQTT.connected()){
+    reconnect_MQTT();
+  }
   MQTT.loop();
 }
