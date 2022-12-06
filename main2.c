@@ -91,8 +91,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
 {
     int i;
     char* payloadptr;
-
-    printf("Mensagem recebida\n");
+	
     printf("tópico: %s\n", topicName);
     printf("mensagem: ");
 
@@ -106,6 +105,13 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
     if(strcmp(topicName,NODE_CONNECTION_STATUS) == 0){
     	if(strcmp(msg,"0x200") == 0){
 		printf("Node online");
+		send(REQUEST,GET_LED_VALUE);
+	}
+    }else if(strcmp(topicName,RESPONSE) == 0){
+    	if(strcmp(msg,"l0") == 0){
+		ledState = 0;
+	}else if(strcmp(msg,"l1") == 0){
+		ledState = 1;
 	}
     }
 	
@@ -214,10 +220,8 @@ void setTimeInterval(){
 
 void setLedState(){
 	if(ledState == 1){
-		ledState = 0;
 		send(REQUEST,SET_OFF_NODEMCU_LED);
 	}else{
-		ledState = 1;
 		send(REQUEST,SET_ON_NODEMCU_LED);
 	}
 }
