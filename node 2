@@ -23,6 +23,7 @@ const char* mqtt_server = "10.0.0.101";
 const char *mqtt_username = "aluno";
 const char *mqtt_password = "@luno*123";
 
+byte ledState = HIGH;
 String address = "D0";
 // Comandos de resposta
 
@@ -38,6 +39,7 @@ String address = "D0";
 #define SET_ON_NODEMCU_LED "0x06"
 #define SET_OFF_NODEMCU_LED "0x07"
 #define GET_NODE_CONNECTION_STATUS "0x08"
+#define GET_LED_VALUE "0x09"
 
 // Definições dos tópicos
 #define ANALOG_SENSOR "tp04/g03/node/analog-sensor/value"
@@ -138,10 +140,10 @@ void receivePackage(char* topic, byte* payload, unsigned int length) {
   if (strcmp(topic, REQUEST) == 0) {
 
     if (msg == SET_ON_NODEMCU_LED) {
-      digitalWrite(LED_BUILTIN, LOW);
+      setLedState(LOW);
       MQTT.publish(RESPONSE, LED_ON);
     } else if (msg == SET_OFF_NODEMCU_LED) {
-      digitalWrite(LED_BUILTIN, HIGH);
+      setLedState(HIGH);
       MQTT.publish(RESPONSE, LED_OFF);
     } else if (msg == GET_NODE_CONNECTION_STATUS) {
       MQTT.publish(NODE_CONNECTION_STATUS,NODE_OK);
@@ -149,6 +151,8 @@ void receivePackage(char* topic, byte* payload, unsigned int length) {
       getDigitalValue(address);
     } else if (msg == GET_ANALOG_INPUT_VALUE){
       getAnalogValue();
+    } else if (msg == GET_LED_VALUE){
+      getLedState();
     }
   } else if (strcmp(topic, ADDRESS) == 0) {
       address = msg;
@@ -204,9 +208,20 @@ void getAnalogValue() {
     MQTT.publish(ANALOG_SENSOR, buf);
 }
 
+void getLedState(){
+  char buf[1];
+  sprintf(buf,"l%d",ledState);
+  MQTT.publish(RESPONSE,buf);
+}
+
+void setLedState(byte state){
+    digitalWrite(LED_BUILTIN,state);
+    ledState = state;
+}
+
 void setup() {
   pinMode(LED_BUILTIN,OUTPUT);
-  digitalWrite(LED_BUILTIN,HIGH);
+  setLedState(HIGH);
   connectWifi_OTA();
   MQTT.setServer(mqtt_server, 1883);
   MQTT.setCallback(receivePackage);
