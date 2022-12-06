@@ -21,6 +21,7 @@
 #define SET_ON_NODEMCU_LED "0x06"
 #define SET_OFF_NODEMCU_LED "0x07"
 #define GET_NODE_CONNECTION_STATUS "0x08"
+#define GET_LED_VALUE "0x09"
 
 // Definições dos tópicos
 #define ANALOG_SENSOR "tp04/g03/node/analog-sensor/value"
@@ -100,8 +101,14 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
     {
         putchar(*payloadptr++);
     }
-
     putchar('\n');
+	
+    if(strcmp(topicName,NODE_CONNECTION_STATUS) == 0){
+    	if(strcmp(msg,"0x200") == 0){
+		printf("Node online");
+	}
+    }
+	
     MQTTClient_freeMessage(&message);
     MQTTClient_free(topicName);
     return 1;
