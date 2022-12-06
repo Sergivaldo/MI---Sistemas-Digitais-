@@ -60,8 +60,13 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
     {
         putchar(*payloadptr++);
     }
-
     putchar('\n');
+	
+    if(strcmp(topicName,NODE_CONNECTION_STATUS) == 0){
+    	if(strcmp(msg,"0x200") == 0){
+		printf("Node online");
+	}
+    }
     MQTTClient_freeMessage(&message);
     MQTTClient_free(topicName);
     return 1;
