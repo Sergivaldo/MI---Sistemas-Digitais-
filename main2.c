@@ -77,7 +77,6 @@ int timeUnitAux = 0;
 
 // Led
 int ledState = 0;
-D1-%c,D1-%c,D1-%c,D1-%c,D1-%c,
 // Flag dos sensores digitais em uso
 char activeSensors[] = {'0','0','0','0','0','0','0','0'};
 
