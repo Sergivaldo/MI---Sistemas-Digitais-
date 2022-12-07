@@ -79,6 +79,8 @@ int timeUnitAux = 0;
 int ledState = 0;
 // Flag dos sensores digitais em uso
 char activeSensors[] = {'0','0','0','0','0','0','0','0'};
+char valueDigitalSensors[] = {'-1','-1','-1','-1','-1','-1','-1','-1'};
+char historyDigitalSensors[9][10];
 
 // Funções do Cliente MQTT
 
@@ -591,4 +593,4 @@ int main(int argc, char* argv[])
     MQTTClient_disconnect(client, 10000);
     MQTTClient_destroy(&client);
     return rc;
-}
+ }
