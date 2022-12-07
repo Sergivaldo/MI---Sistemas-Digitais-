@@ -5,26 +5,22 @@
 #include <PubSubClient.h>
 
 //Definicoes
-//#ifndef STASSID
-//#define STASSID "Nina"
-//#define STAPSK  "paralelogramo01"
-//#endif
-
 #ifndef STASSID
-#define STASSID "INTELBRAS"
-#define STAPSK  "Pbl-Sistemas-Digitais"
+#define STASSID "Nina"
+#define STAPSK  "paralelogramo01"
 #endif
 
 //Constantes e variaveis
 const char* ssid = STASSID;
 const char* password = STAPSK;
 
-const char* mqtt_server = "10.0.0.101";
-const char *mqtt_username = "aluno";
-const char *mqtt_password = "@luno*123";
+const char* mqtt_server = "broker.emqx.io";
+// const char *mqtt_username = "aluno";
+// const char *mqtt_password = "@luno*123";
 
 byte ledState = HIGH;
 String address = "D0";
+char activeSensors = {'0','0','0','0','0','0','0','0'};
 // Comandos de resposta
 
 #define ANALOG_INPUT_VALUE "0x01"
@@ -114,8 +110,8 @@ void connectWifi_OTA(){
 
 void reconnect_MQTT(){
   Serial.print("Attempting MQTT connection...");
-  String clientId = "TP04/G03";
-  if (MQTT.connect(clientId.c_str(),mqtt_username,mqtt_password)) {
+  String clientId = "N-TP04/G03";
+  if (MQTT.connect(clientId.c_str())) {
     Serial.println("connected");
     MQTT.subscribe(REQUEST);
     MQTT.subscribe(ADDRESS);
@@ -126,6 +122,23 @@ void reconnect_MQTT(){
     Serial.println(" try again in 5 seconds");
     delay(2000);
   }
+}
+
+void setActiveSensors(char * str){
+  char * substr =  malloc(50);
+  substr = strtok(str, ",");
+   // loop through the string to extract all other tokens
+  while( substr != NULL ) {
+      char *pinName = malloc(2);
+      strncpy(pinName, substr,2);
+      int index = ((int)pinName[1]) - ((int)'0');
+      
+      char *pinValue = malloc(2);
+      strncpy(pinValue, substr+3,1);
+      activeSensors[index] = *pinValue;
+      
+      substr = strtok(NULL, ",");
+   }
 }
 
 void receivePackage(char* topic, byte* payload, unsigned int length) {
@@ -209,7 +222,7 @@ void getAnalogValue() {
 }
 
 void getLedState(){
-  char buf[1];
+  char buf[2];
   sprintf(buf,"l%d",ledState);
   MQTT.publish(RESPONSE,buf);
 }
