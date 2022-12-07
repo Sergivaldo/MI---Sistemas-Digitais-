@@ -6,6 +6,7 @@
 #include <PubSubClient.h>
 #include <stdlib.h>
 #include <string.h>
+
 //Definicoes
 //#ifndef STASSID
 //#define STASSID "Nina"
@@ -27,7 +28,7 @@ const char *mqtt_password = "@luno*123";
 
 byte ledState = HIGH;
 String address = "D0";
-char activeSensors[] = {'0','0','0','0','0','0','0','0'};
+char activeSensors[] = {'1','1','0','0','0','0','0','0'};
 unsigned int sendInterval = 2000;
 // Comandos de resposta
 
@@ -67,6 +68,13 @@ unsigned int sendInterval = 2000;
 
 WiFiClient espClient;
 PubSubClient MQTT(espClient);
+
+void setTimeInterval(int sec);
+char getDigitalValue(String addr);
+void sendDigitalValues();
+void getAnalogValue();
+void getLedState();
+void setLedState();
 
 void connectWifi_OTA(){
   Serial.begin(9600);
