@@ -1,3 +1,4 @@
+#include <TimedAction.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
@@ -5,7 +6,6 @@
 #include <PubSubClient.h>
 #include <stdlib.h>
 #include <string.h>
-
 //Definicoes
 //#ifndef STASSID
 //#define STASSID "Nina"
@@ -28,6 +28,7 @@ const char *mqtt_password = "@luno*123";
 byte ledState = HIGH;
 String address = "D0";
 char activeSensors[] = {'0','0','0','0','0','0','0','0'};
+unsigned int sendInterval = 2000;
 // Comandos de resposta
 
 #define ANALOG_INPUT_VALUE "0x01"
@@ -52,8 +53,9 @@ char activeSensors[] = {'0','0','0','0','0','0','0','0'};
 #define ADDRESS "tp04/g03/node/digital-sensor/address"
 #define NODE_CONNECTION_STATUS "tp04/g03/node/status"
 #define ACTIVE_SENSOR "tp04/g03/node/active-sensors"
-// Endereço pino
+#define TIME_INTERVAL "tp04/g03/node/time-interval"
 
+// Endereço pino
 #define ADDR_D0 "D0"
 #define ADDR_D1 "D1"
 #define ADDR_D2 "D2"
@@ -122,6 +124,7 @@ void reconnect_MQTT(){
     Serial.println("connected");
     MQTT.subscribe(REQUEST);
     MQTT.subscribe(ACTIVE_SENSOR);
+    MQTT.subscribe(TIME_INTERVAL);
     MQTT.publish(RESPONSE,"node conectada");
   } else {
     Serial.print("failed, rc=");
@@ -146,6 +149,7 @@ void setActiveSensors(char * str){
       
       substr = strtok(NULL, ",");
    }
+   MQTT.publish(RESPONSE,"sensores ativos recebidos");
 }
 
 void receivePackage(char* topic, byte* payload, unsigned int length) {
@@ -178,6 +182,9 @@ void receivePackage(char* topic, byte* payload, unsigned int length) {
       char arr[msg.length()];
       msg.toCharArray(arr,msg.length());
       setActiveSensors(arr);
+  } else if (strcmp(topic, TIME_INTERVAL) == 0) {
+    MQTT.publish(RESPONSE,"mudando intervalo");
+    setTimeInterval(msg.toInt());
   }
 
   Serial.print("Mensagem recebida: ");
@@ -185,9 +192,10 @@ void receivePackage(char* topic, byte* payload, unsigned int length) {
   Serial.println();
 }
 
-int getDigitalValue(String addr) {
+char getDigitalValue(String addr) {
   int value;
-  char buf[4];
+  char valueCh;
+  char buff[2];
   if (addr == "D0") {
     value = digitalRead(D0);
   } else if (addr == "D1") {
@@ -205,24 +213,32 @@ int getDigitalValue(String addr) {
   } else if (addr == "D7") {
     value = digitalRead(D7);
   }
-
-  return value;
+  
+  if(value == 1){
+    valueCh = '1';
+  }else if(value == 0){
+    valueCh = '0';
+  }
+  sprintf(buff,"%d",value);
+  MQTT.publish(RESPONSE,buff);
+  return valueCh;
 }
 
 void sendDigitalValues() {
   int value;
-  String buf[9];
+  char buf[9];
   char msg[50];
 
   for(int i = 0;i <sizeof(activeSensors);i++){
-    if(activeSensors[i] == 1){
-       buf[i] = String(getDigitalValue("D"+i));
-    }else if(activeSensors[i] == 0){
-      buf[i] = "-1";
-    }  
+    if(activeSensors[i] == '1'){
+       String pinName = "D" + String(i);
+       buf[i] = getDigitalValue(pinName);
+    }else{
+      buf[i] = 'n';
+    }
   }
-
-  sprintf(msg,"D0&%s,D1&%s,D2&%s,D3&%s,D4&%s,D5&%s,D6&%s,D7&%s",buf[0],buf[1],buf[2],buf[3],buf[4],buf[5],buf[6],buf[7]);
+  MQTT.publish(RESPONSE,"enviando sinal digital");
+  sprintf(msg,"D0-%c,D1-%c,D2-%c,D3-%c,D4-%c,D5-%c,D6-%c,D7-%c",buf[0],buf[1],buf[2],buf[3],buf[4],buf[5],buf[6],buf[7]);
   MQTT.publish(DIGITAL_SENSOR, msg);
 }
 
@@ -245,6 +261,17 @@ void setLedState(byte state){
     ledState = state;
 }
 
+void sendAll(){
+  sendDigitalValues();
+  getAnalogValue();  
+}
+
+TimedAction sendAction = TimedAction(sendInterval,sendAll);
+
+void setTimeInterval(int sec){
+  sendInterval = sec * 1000;
+  sendAction.setInterval(sendInterval);
+}
 void setup() {
   pinMode(LED_BUILTIN,OUTPUT);
   setLedState(HIGH);
@@ -260,4 +287,5 @@ void loop() {
   }
   ArduinoOTA.handle();
   MQTT.loop();
+  sendAction.check();
 }
