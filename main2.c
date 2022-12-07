@@ -30,6 +30,7 @@
 #define RESPONSE "tp04/g03/mqtt/response/value"
 #define ADDRESS "tp04/g03/node/digital-sensor/address"
 #define NODE_CONNECTION_STATUS "tp04/g03/node/status"
+#define ACTIVE_SENSORS "tp04/g03/node/active-sensors"
 
 // Definições dos endereços dos sensores digitais
 
@@ -61,13 +62,14 @@ int lcd;
 int currentMenuOption = 0;
 int currentMenuSensorOption = 1;
 int currentMenuIntervalOption = 1;
-
+int currentUsedSensorsOption = 1;
 // Flags de parada
 int stopLoopMainMenu = 0;
 int stopLoopConfigMenu = 0;
 int stopLoopSensorsMenu = 0;
 int stopLoopSetTimeInterval = 0;
 int stopLoopSetTimeUnit = 0;
+int stopLoopSetUsedSensors = 0;
 // Intervalo de Tempo
 int timeInterval = 1;
 char timeUnit = 's';
@@ -75,6 +77,9 @@ int timeUnitAux = 0;
 
 // Led
 int ledState = 0;
+D1-%c,D1-%c,D1-%c,D1-%c,D1-%c,
+// Flag dos sensores digitais em uso
+char activeSensors[] = {'0','0','0','0','0','0','0','0'};
 
 // Funções do Cliente MQTT
 
@@ -225,7 +230,7 @@ void setLedState(){
 		send(REQUEST,SET_ON_NODEMCU_LED);
 	}
 }
-	
+
 void setTimeUnit(){
 	lcdClear(lcd);
 	while(!stopLoopSetTimeUnit){
@@ -256,6 +261,104 @@ void setTimeUnit(){
 	stopLoopSetTimeUnit = 0;
 }
 
+void sendActiveSensors(){
+	char str[50];
+	sprintf(str,"D0-%c,D1-%c,D2-%c,D3-%c,D4-%c,D5-%c,D6-%c,D7-%c",activeSensors[0],activeSensors[1],activeSensors[2],activeSensors[3],activeSensors[4],activeSensors[5],activeSensors[6],activeSensors[7]);
+	send(ACTIVE_SENSORS,str);
+}
+
+void closeAndSendMessage(){
+	
+}
+
+void setUsedSensors(){
+	while(!stopLoopSetUsedSensors){
+		switch(currentUsedSensorsOption){
+			case 1:
+				lcdHome(lcd);
+				lcdPuts(lcd,"   SENSOR D0:   ");
+				lcdPosition(lcd,0,1);
+				lcdPuts(lcd,"   DESATIVADO   ");
+				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,4);
+				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,1);
+				enter(BUTTON_3);
+				break;
+			case 2:
+				lcdHome(lcd);
+				lcdPuts(lcd,"   SENSOR D1:   ");
+				lcdPosition(lcd,0,1);
+				lcdPuts(lcd,"   DESATIVADO   ");
+				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,4);
+				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,1);
+				enter(BUTTON_3);
+				break;
+			case 3:
+				lcdHome(lcd);
+				lcdPuts(lcd,"   SENSOR D2:   ");
+				lcdPosition(lcd,0,1);
+				lcdPuts(lcd,"   DESATIVADO   ");
+				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,4);
+				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,1);
+				enter(BUTTON_3);
+				break;
+			case 4:
+				lcdHome(lcd);
+				lcdPuts(lcd,"   SENSOR D3:   ");
+				lcdPosition(lcd,0,1);
+				lcdPuts(lcd,"   DESATIVADO   ");
+				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,4);
+				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,1);
+				enter(BUTTON_3);
+				break;
+			case 5:
+				lcdHome(lcd);
+				lcdPuts(lcd,"   SENSOR D4:   ");
+				lcdPosition(lcd,0,1);
+				lcdPuts(lcd,"   DESATIVADO   ");
+				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,4);
+				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,1);
+				enter(BUTTON_3);
+				break;
+			case 6:
+				lcdHome(lcd);
+				lcdPuts(lcd,"   SENSOR D5:   ");
+				lcdPosition(lcd,0,1);
+				lcdPuts(lcd,"   DESATIVADO   ");
+				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,4);
+				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,1);
+				enter(BUTTON_3);
+				break;
+			case 7:
+				lcdHome(lcd);
+				lcdPuts(lcd,"   SENSOR D6:   ");
+				lcdPosition(lcd,0,1);
+				lcdPuts(lcd,"   DESATIVADO   ");
+				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,4);
+				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,1);
+				enter(BUTTON_3);
+				break;
+			case 8:
+				lcdHome(lcd);
+				lcdPuts(lcd,"   SENSOR D7:   ");
+				lcdPosition(lcd,0,1);
+				lcdPuts(lcd,"   DESATIVADO   ");
+				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,4);
+				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,1);
+				enter(BUTTON_3);
+				break;
+			case 1:
+				lcdHome(lcd);
+				lcdPuts(lcd,"      SAIR      ");
+				lcdPosition(lcd,0,1);
+				lcdPuts(lcd,"                ");
+				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,4);
+				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,1);
+				closeAndSendMessage(BUTTON_3);
+				break;
+		}
+	}
+}
+
 void configMenu(){
 	while(!stopLoopConfigMenu){
 		switch(currentMenuIntervalOption){
@@ -264,7 +367,7 @@ void configMenu(){
 				lcdPuts(lcd,"     AJUSTAR    ");
 				lcdPosition(lcd,0,1);
 				lcdPuts(lcd,"    INTERVALO   ");
-				isPressed(BUTTON_2,increment,&currentMenuIntervalOption,3);
+				isPressed(BUTTON_2,increment,&currentMenuIntervalOption,4);
 				isPressed(BUTTON_1,decrement,&currentMenuIntervalOption,1);
 				enter(BUTTON_3,setTimeInterval);
 				break;
@@ -273,16 +376,25 @@ void configMenu(){
 				lcdPuts(lcd,"     AJUSTAR    ");
 				lcdPosition(lcd,0,1);
 				lcdPuts(lcd,"   UNID. TEMPO  ");
-				isPressed(BUTTON_2,increment,&currentMenuIntervalOption,3);
+				isPressed(BUTTON_2,increment,&currentMenuIntervalOption,4);
 				isPressed(BUTTON_1,decrement,&currentMenuIntervalOption,1);
 				enter(BUTTON_3,setTimeUnit);
 				break;
 			case 3:
 				lcdHome(lcd);
+				lcdPuts(lcd,"  ESPECIFICAR   ");
+				lcdPosition(lcd,0,1);
+				lcdPuts(lcd,"SENSORES ATIVOS ");
+				isPressed(BUTTON_2,increment,&currentMenuIntervalOption,4);
+				isPressed(BUTTON_1,decrement,&currentMenuIntervalOption,1);
+				enter(BUTTON_3,setUsedSensors);
+				break;
+			case 4:
+				lcdHome(lcd);
 				lcdPuts(lcd,"      SAIR      ");
 				lcdPosition(lcd,0,1);
 				lcdPuts(lcd,"                ");
-				isPressed(BUTTON_2,increment,&currentMenuIntervalOption,3);
+				isPressed(BUTTON_2,increment,&currentMenuIntervalOption,4);
 				isPressed(BUTTON_1,decrement,&currentMenuIntervalOption,1);
 				close(BUTTON_3,&stopLoopConfigMenu);
 				break;
@@ -373,6 +485,8 @@ void sensorsMenu(){
 	stopLoopSensorsMenu = 0;
 	lcdClear(lcd);
 }
+
+
 
 void mainMenu(){
 	while(!stopLoopMainMenu){
