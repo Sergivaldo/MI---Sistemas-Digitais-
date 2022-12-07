@@ -78,14 +78,25 @@ int timeUnitAux = 0;
 // Led
 int ledState = 0;
 // Flag dos sensores digitais em uso
-char activeSensors[] = {'0','0','0','0','0','0','0','0'};
-char valueDigitalSensors[] = {'-1','-1','-1','-1','-1','-1','-1','-1'};
+char activeSensors[] = {'1','1','0','0','0','0','0','0'};
+char valueDigitalSensors[] = {'n','n','n','n','n','n','n','n'};
 char historyDigitalSensors[9][10];
 
 // Funções do Cliente MQTT
 
 volatile MQTTClient_deliveryToken deliveredtoken;
 MQTTClient client;
+
+void send(char* topic, char* payload) {
+    MQTTClient_message pubmsg = MQTTClient_message_initializer;
+    pubmsg.payload = payload;
+    pubmsg.payloadlen = strlen(pubmsg.payload);
+    pubmsg.qos = QOS2;
+    pubmsg.retained = 0;
+    MQTTClient_deliveryToken token;
+    MQTTClient_publishMessage(client, topic, &pubmsg, &token);
+    MQTTClient_waitForCompletion(client, token, TIMEOUT);
+}
 
 void delivered(void *context, MQTTClient_deliveryToken dt)
 {
@@ -109,15 +120,15 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
     putchar('\n');
 	
     if(strcmp(topicName,NODE_CONNECTION_STATUS) == 0){
-    	if(strcmp(msg,"0x200") == 0){
+    	if(strcmp(payloadptr,"0x200") == 0){
 		printf("Node online");
 		send(REQUEST,GET_LED_VALUE);
 	}
     }else if(strcmp(topicName,RESPONSE) == 0){
-    	if(strcmp(msg,"l0") == 0){
-		ledState = 0;
-	}else if(strcmp(msg,"l1") == 0){
+    	if(strcmp(payloadptr,"0x03") == 0){
 		ledState = 1;
+	}else if(strcmp(payloadptr,"0x04") == 0){
+		ledState = 0;
 	}
     }
 	
@@ -132,16 +143,6 @@ void connlost(void *context, char *cause)
     printf("     cause: %s\n", cause);
 }
 
-void send(char* topic, char* payload) {
-    MQTTClient_message pubmsg = MQTTClient_message_initializer;
-    pubmsg.payload = payload;
-    pubmsg.payloadlen = strlen(pubmsg.payload);
-    pubmsg.qos = QOS2;
-    pubmsg.retained = 0;
-    MQTTClient_deliveryToken token;
-    MQTTClient_publishMessage(client, topic, &pubmsg, &token);
-    MQTTClient_waitForCompletion(client, token, TIMEOUT);
-}
 
 // Funções do menu lcd
 
@@ -166,6 +167,21 @@ void enter(int btt,void (*function)(void)){
 	} 
 }
 
+void toggleState(int btt,int index){
+	if(digitalRead(btt) == 0){
+		delay(90);
+		if(digitalRead(btt) == 0){
+			if(activeSensors[index] == '1'){
+				activeSensors[index] = '0';
+			}else{
+				activeSensors[index] = '1';
+			}
+			
+			while(digitalRead(btt) == 0);
+		}
+	} 
+}
+
 void close(int btt,int* stopFlag){
 	if(digitalRead(btt) == 0){
 		delay(90);
@@ -173,6 +189,17 @@ void close(int btt,int* stopFlag){
 			*stopFlag = 1;
 			while(digitalRead(btt) == 0);
 		}
+	} 
+}
+
+void closeSetSensors(int btt,int* stopFlag,void (*function)(void)){
+	if(digitalRead(btt) == 0){
+		delay(90);
+		if(digitalRead(btt) == 0){
+			*stopFlag = 1;
+			while(digitalRead(btt) == 0);
+		}
+		function();
 	} 
 }
 
@@ -268,8 +295,21 @@ void sendActiveSensors(){
 	send(ACTIVE_SENSORS,str);
 }
 
-void closeAndSendMessage(){
-	
+void statusSensorMessage(int index){
+	if(activeSensors[index] == '1'){
+		lcdPuts(lcd,"     ATIVADO    ");
+	}else{
+		lcdPuts(lcd,"   DESATIVADO   ");
+	}
+}
+
+void valueDigitalSensor(int index){
+
+	if(activeSensors[index] == '1'){
+		lcdPrintf(lcd,"     VALOR:%c    ",valueDigitalSensors[index]);
+	}else{
+		lcdPuts(lcd,"   DESATIVADO   ");
+	}
 }
 
 void setUsedSensors(){
@@ -279,82 +319,82 @@ void setUsedSensors(){
 				lcdHome(lcd);
 				lcdPuts(lcd,"   SENSOR D0:   ");
 				lcdPosition(lcd,0,1);
-				lcdPuts(lcd,"   DESATIVADO   ");
-				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,4);
+				statusSensorMessage(0);
+				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,9);
 				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,1);
-				enter(BUTTON_3);
+				toggleState(BUTTON_3, 0);
 				break;
 			case 2:
 				lcdHome(lcd);
 				lcdPuts(lcd,"   SENSOR D1:   ");
 				lcdPosition(lcd,0,1);
-				lcdPuts(lcd,"   DESATIVADO   ");
-				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,4);
+				statusSensorMessage(1);
+				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,9);
 				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,1);
-				enter(BUTTON_3);
+				toggleState(BUTTON_3, 1);
 				break;
 			case 3:
 				lcdHome(lcd);
 				lcdPuts(lcd,"   SENSOR D2:   ");
 				lcdPosition(lcd,0,1);
-				lcdPuts(lcd,"   DESATIVADO   ");
-				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,4);
+				statusSensorMessage(2);
+				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,9);
 				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,1);
-				enter(BUTTON_3);
+				toggleState(BUTTON_3, 2);
 				break;
 			case 4:
 				lcdHome(lcd);
 				lcdPuts(lcd,"   SENSOR D3:   ");
 				lcdPosition(lcd,0,1);
-				lcdPuts(lcd,"   DESATIVADO   ");
-				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,4);
+				statusSensorMessage(3);
+				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,9);
 				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,1);
-				enter(BUTTON_3);
+				toggleState(BUTTON_3, 3);
 				break;
 			case 5:
 				lcdHome(lcd);
 				lcdPuts(lcd,"   SENSOR D4:   ");
 				lcdPosition(lcd,0,1);
-				lcdPuts(lcd,"   DESATIVADO   ");
-				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,4);
+				statusSensorMessage(4);
+				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,9);
 				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,1);
-				enter(BUTTON_3);
+				toggleState(BUTTON_3, 4);
 				break;
 			case 6:
 				lcdHome(lcd);
 				lcdPuts(lcd,"   SENSOR D5:   ");
 				lcdPosition(lcd,0,1);
-				lcdPuts(lcd,"   DESATIVADO   ");
-				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,4);
+				statusSensorMessage(5);
+				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,9);
 				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,1);
-				enter(BUTTON_3);
+				toggleState(BUTTON_3, 5);
 				break;
 			case 7:
 				lcdHome(lcd);
 				lcdPuts(lcd,"   SENSOR D6:   ");
 				lcdPosition(lcd,0,1);
-				lcdPuts(lcd,"   DESATIVADO   ");
-				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,4);
+				statusSensorMessage(6);
+				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,9);
 				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,1);
-				enter(BUTTON_3);
+				toggleState(BUTTON_3, 6);
 				break;
 			case 8:
 				lcdHome(lcd);
 				lcdPuts(lcd,"   SENSOR D7:   ");
 				lcdPosition(lcd,0,1);
-				lcdPuts(lcd,"   DESATIVADO   ");
-				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,4);
+				statusSensorMessage(7);
+				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,9);
 				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,1);
-				enter(BUTTON_3);
+				toggleState(BUTTON_3, 7);
 				break;
-			case 1:
+			case 9:
 				lcdHome(lcd);
 				lcdPuts(lcd,"      SAIR      ");
 				lcdPosition(lcd,0,1);
 				lcdPuts(lcd,"                ");
-				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,4);
+				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,9);
 				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,1);
-				closeAndSendMessage(BUTTON_3);
+				closeSetSensors(BUTTON_3,&stopLoopSetUsedSensors,sendActiveSensors);
 				break;
 		}
 	}
@@ -412,7 +452,7 @@ void sensorsMenu(){
 				lcdHome(lcd);
 				lcdPuts(lcd,"    SENSOR D0   ");
 				lcdPosition(lcd,0,1);
-				lcdPuts(lcd,"                ");
+				valueDigitalSensor(0);
 				isPressed(BUTTON_2,increment,&currentMenuSensorOption,9);
 				isPressed(BUTTON_1,decrement,&currentMenuSensorOption,1);
 				break;
@@ -420,7 +460,7 @@ void sensorsMenu(){
 				lcdHome(lcd);
 				lcdPuts(lcd,"    SENSOR D1   ");
 				lcdPosition(lcd,0,1);
-				lcdPuts(lcd,"                ");
+				valueDigitalSensor(1);
 				isPressed(BUTTON_2,increment,&currentMenuSensorOption,9);
 				isPressed(BUTTON_1,decrement,&currentMenuSensorOption,1);
 				break;
@@ -428,7 +468,7 @@ void sensorsMenu(){
 			    lcdHome(lcd);
 				lcdPuts(lcd,"    SENSOR D2   ");
 				lcdPosition(lcd,0,1);
-				lcdPuts(lcd,"                ");
+				valueDigitalSensor(2);
 				isPressed(BUTTON_2,increment,&currentMenuSensorOption,9);
 				isPressed(BUTTON_1,decrement,&currentMenuSensorOption,1);
 				break;
@@ -436,7 +476,7 @@ void sensorsMenu(){
 				lcdHome(lcd);
 				lcdPuts(lcd,"    SENSOR D3   ");
 				lcdPosition(lcd,0,1);
-				lcdPuts(lcd,"                ");
+				valueDigitalSensor(3);
 				isPressed(BUTTON_2,increment,&currentMenuSensorOption,9);
 				isPressed(BUTTON_1,decrement,&currentMenuSensorOption,1);
 				break;
@@ -444,7 +484,7 @@ void sensorsMenu(){
 				lcdHome(lcd);
 				lcdPuts(lcd,"    SENSOR D4   ");
 				lcdPosition(lcd,0,1);
-				lcdPuts(lcd,"                ");
+				valueDigitalSensor(4);
 				isPressed(BUTTON_2,increment,&currentMenuSensorOption,9);
 				isPressed(BUTTON_1,decrement,&currentMenuSensorOption,1);
 				break;
@@ -452,7 +492,7 @@ void sensorsMenu(){
 				lcdHome(lcd);
 				lcdPuts(lcd,"    SENSOR D5   ");
 				lcdPosition(lcd,0,1);
-				lcdPuts(lcd,"                ");
+				valueDigitalSensor(5);
 				isPressed(BUTTON_2,increment,&currentMenuSensorOption,9);
 				isPressed(BUTTON_1,decrement,&currentMenuSensorOption,1);
 				break;
@@ -460,7 +500,7 @@ void sensorsMenu(){
 				lcdHome(lcd);
 				lcdPuts(lcd,"    SENSOR D6   ");
 				lcdPosition(lcd,0,1);
-				lcdPuts(lcd,"                ");
+				valueDigitalSensor(6);
 				isPressed(BUTTON_2,increment,&currentMenuSensorOption,9);
 				isPressed(BUTTON_1,decrement,&currentMenuSensorOption,1);
 				break;
@@ -468,7 +508,7 @@ void sensorsMenu(){
 				lcdHome(lcd);
 				lcdPuts(lcd,"    SENSOR D7   ");
 				lcdPosition(lcd,0,1);
-				lcdPuts(lcd,"                ");
+				valueDigitalSensor(7);
 				isPressed(BUTTON_2,increment,&currentMenuSensorOption,9);
 				isPressed(BUTTON_1,decrement,&currentMenuSensorOption,1);
 				break;
@@ -486,8 +526,6 @@ void sensorsMenu(){
 	stopLoopSensorsMenu = 0;
 	lcdClear(lcd);
 }
-
-
 
 void mainMenu(){
 	while(!stopLoopMainMenu){
