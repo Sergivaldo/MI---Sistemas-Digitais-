@@ -3,6 +3,8 @@
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 #include <PubSubClient.h>
+#include <stdlib.h>
+#include <string.h>
 
 //Definicoes
 //#ifndef STASSID
@@ -19,13 +21,13 @@
 const char* ssid = STASSID;
 const char* password = STAPSK;
 
-const char* mqtt_server = "broker.emqx.io";
-// const char *mqtt_username = "aluno";
-// const char *mqtt_password = "@luno*123";
+const char* mqtt_server = "10.0.0.101";
+const char *mqtt_username = "aluno";
+const char *mqtt_password = "@luno*123";
 
 byte ledState = HIGH;
 String address = "D0";
-char activeSensors = {'0','0','0','0','0','0','0','0'};
+char activeSensors[] = {'0','0','0','0','0','0','0','0'};
 // Comandos de resposta
 
 #define ANALOG_INPUT_VALUE "0x01"
@@ -49,7 +51,7 @@ char activeSensors = {'0','0','0','0','0','0','0','0'};
 #define RESPONSE "tp04/g03/mqtt/response/value"
 #define ADDRESS "tp04/g03/node/digital-sensor/address"
 #define NODE_CONNECTION_STATUS "tp04/g03/node/status"
-
+#define ACTIVE_SENSOR "tp04/g03/node/active-sensors"
 // Endereço pino
 
 #define ADDR_D0 "D0"
@@ -116,10 +118,10 @@ void connectWifi_OTA(){
 void reconnect_MQTT(){
   Serial.print("Attempting MQTT connection...");
   String clientId = "N-TP04/G03";
-  if (MQTT.connect(clientId.c_str())) {
+  if (MQTT.connect(clientId.c_str(),mqtt_username,mqtt_password)) {
     Serial.println("connected");
     MQTT.subscribe(REQUEST);
-    MQTT.subscribe(ADDRESS);
+    MQTT.subscribe(ACTIVE_SENSOR);
     MQTT.publish(RESPONSE,"node conectada");
   } else {
     Serial.print("failed, rc=");
@@ -130,15 +132,15 @@ void reconnect_MQTT(){
 }
 
 void setActiveSensors(char * str){
-  char * substr =  malloc(50);
+  char *substr;
   substr = strtok(str, ",");
    // loop through the string to extract all other tokens
   while( substr != NULL ) {
-      char *pinName = malloc(2);
+      char pinName[2];
       strncpy(pinName, substr,2);
       int index = ((int)pinName[1]) - ((int)'0');
       
-      char *pinValue = malloc(2);
+      char pinValue[2];
       strncpy(pinValue, substr+3,1);
       activeSensors[index] = *pinValue;
       
@@ -166,14 +168,16 @@ void receivePackage(char* topic, byte* payload, unsigned int length) {
     } else if (msg == GET_NODE_CONNECTION_STATUS) {
       MQTT.publish(NODE_CONNECTION_STATUS,NODE_OK);
     } else if (msg == GET_DIGITAL_INPUT_VALUE) {
-      getDigitalValue(address);
+      sendDigitalValues();
     } else if (msg == GET_ANALOG_INPUT_VALUE){
       getAnalogValue();
     } else if (msg == GET_LED_VALUE){
       getLedState();
     }
-  } else if (strcmp(topic, ADDRESS) == 0) {
-      address = msg;
+  } else if (strcmp(topic, ACTIVE_SENSOR) == 0) {
+      char arr[msg.length()];
+      msg.toCharArray(arr,msg.length());
+      setActiveSensors(arr);
   }
 
   Serial.print("Mensagem recebida: ");
@@ -181,43 +185,47 @@ void receivePackage(char* topic, byte* payload, unsigned int length) {
   Serial.println();
 }
 
-void getDigitalValue(String addr) {
+int getDigitalValue(String addr) {
   int value;
   char buf[4];
   if (addr == "D0") {
     value = digitalRead(D0);
-    snprintf(buf,4,"%ld",value);
-    MQTT.publish(DIGITAL_SENSOR, buf);
   } else if (addr == "D1") {
     value = digitalRead(D1);
-    snprintf(buf,4,"%ld",value);
-    MQTT.publish(DIGITAL_SENSOR, buf);
   } else if (addr == "D2") {
     value = digitalRead(D2);
-    snprintf(buf,4,"%ld",value);
-    MQTT.publish(DIGITAL_SENSOR, buf);
   } else if (addr == "D3") {
     value = digitalRead(D3);
-    snprintf(buf,4,"%ld",value);
-    MQTT.publish(DIGITAL_SENSOR, buf);
   } else if (addr == "D4") {
     value = digitalRead(D4);
-    snprintf(buf,4,"%ld",value);
-    MQTT.publish(DIGITAL_SENSOR, buf);
   } else if (addr == "D5") {
     value = digitalRead(D5);
-    snprintf(buf,4,"%ld",value);
-    MQTT.publish(DIGITAL_SENSOR, buf);
   } else if (addr == "D6") {
     value = digitalRead(D6);
-    snprintf(buf,4,"%ld",value);
-    MQTT.publish(DIGITAL_SENSOR, buf);
   } else if (addr == "D7") {
     value = digitalRead(D7);
-    snprintf(buf,4,"%ld",value);
-    MQTT.publish(DIGITAL_SENSOR, buf);
   }
+
+  return value;
 }
+
+void sendDigitalValues() {
+  int value;
+  String buf[9];
+  char msg[50];
+
+  for(int i = 0;i <sizeof(activeSensors);i++){
+    if(activeSensors[i] == 1){
+       buf[i] = String(getDigitalValue("D"+i));
+    }else if(activeSensors[i] == 0){
+      buf[i] = "-1";
+    }  
+  }
+
+  sprintf(msg,"D0&%s,D1&%s,D2&%s,D3&%s,D4&%s,D5&%s,D6&%s,D7&%s",buf[0],buf[1],buf[2],buf[3],buf[4],buf[5],buf[6],buf[7]);
+  MQTT.publish(DIGITAL_SENSOR, msg);
+}
+
 
 void getAnalogValue() {
     int value = analogRead(A0);
