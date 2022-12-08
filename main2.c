@@ -23,6 +23,7 @@
 #define GET_NODE_CONNECTION_STATUS "0x08"
 #define GET_LED_VALUE "0x09"
 
+
 // Definições dos tópicos
 #define ANALOG_SENSOR "tp04/g03/node/analog-sensor/value"
 #define DIGITAL_SENSOR "tp04/g03/node/digital-sensor/value"
@@ -61,12 +62,14 @@ int lcd;
 // Controles de navegação dos menus
 int currentMenuOption = 0;
 int currentMenuSensorOption = 1;
+int currentMenuAnalogSensorOption = 1;
 int currentMenuIntervalOption = 1;
 int currentUsedSensorsOption = 1;
 // Flags de parada
 int stopLoopMainMenu = 0;
 int stopLoopConfigMenu = 0;
-int stopLoopSensorsMenu = 0;
+int stopLoopDigitalSensorsMenu = 0;
+int stopLoopAnalogSensorsMenu = 0;
 int stopLoopSetTimeInterval = 0;
 int stopLoopSetTimeUnit = 0;
 int stopLoopSetUsedSensors = 0;
@@ -81,11 +84,29 @@ int ledState = 0;
 char activeSensors[] = {'1','1','0','0','0','0','0','0'};
 char valueDigitalSensors[] = {'n','n','n','n','n','n','n','n'};
 char historyDigitalSensors[9][10];
-
+char* bufDigitalValues;
+char* analogValue;
 // Funções do Cliente MQTT
 
 volatile MQTTClient_deliveryToken deliveredtoken;
 MQTTClient client;
+
+void setDigitalValueSensors(){
+  char * substr =  malloc(50);
+  substr = strtok(bufDigitalValues, ",");
+   // loop through the string to extract all other tokens
+  while( substr != NULL ) {
+      char *pinName = malloc(2);
+      strncpy(pinName, substr,2);
+      int index = ((int)pinName[1]) - ((int)'0');
+
+      char *pinValue = malloc(2);
+      strncpy(pinValue, substr+3,1);
+      valueDigitalSensors[index] = *pinValue;
+
+      substr = strtok(NULL, ",");
+   }
+}
 
 void send(char* topic, char* payload) {
     MQTTClient_message pubmsg = MQTTClient_message_initializer;
@@ -98,38 +119,24 @@ void send(char* topic, char* payload) {
     MQTTClient_waitForCompletion(client, token, TIMEOUT);
 }
 
-void delivered(void *context, MQTTClient_deliveryToken dt)
-{
-    printf("Message with token value %d delivery confirmed\n", dt);
-    deliveredtoken = dt;
-}
-
 int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *message)
 {
-    int i;
-    char* payloadptr;
-	
-    printf("tópico: %s\n", topicName);
-    printf("mensagem: ");
-
-    payloadptr = message->payload;
-    for(i=0; i<message->payloadlen; i++)
-    {
-        putchar(*payloadptr++);
-    }
-    putchar('\n');
-	
+    char* msg = message -> payload;
     if(strcmp(topicName,NODE_CONNECTION_STATUS) == 0){
-    	if(strcmp(payloadptr,"0x200") == 0){
-		printf("Node online");
+    	if(strcmp(msg,"0x200") == 0){
 		send(REQUEST,GET_LED_VALUE);
 	}
     }else if(strcmp(topicName,RESPONSE) == 0){
-    	if(strcmp(payloadptr,"0x03") == 0){
+    	if(strcmp(msg,"0x03") == 0){
 		ledState = 1;
-	}else if(strcmp(payloadptr,"0x04") == 0){
+	}else if(strcmp(msg,"0x04") == 0){
 		ledState = 0;
 	}
+    }else if(strcmp(topicName,DIGITAL_SENSOR) == 0){
+    	bufDigitalValues = msg;
+    	setDigitalValueSensors();
+    }else if(strcmp(topicName,ANALOG_SENSOR) == 0){
+    	analogValue = msg;
     }
 	
     MQTTClient_freeMessage(&message);
@@ -312,6 +319,8 @@ void valueDigitalSensor(int index){
 	}
 }
 
+
+
 void setUsedSensors(){
 	while(!stopLoopSetUsedSensors){
 		switch(currentUsedSensorsOption){
@@ -445,8 +454,36 @@ void configMenu(){
 	lcdClear(lcd);
 }
 
-void sensorsMenu(){
-	while(!stopLoopSensorsMenu){
+void analogSensorsMenu(){
+	lcdClear(lcd);
+	while(!stopLoopAnalogSensorsMenu){
+		switch(currentMenuAnalogSensorOption){
+			case 1:
+				lcdHome(lcd);
+				lcdPuts(lcd,"    SENSOR A0   ");
+				lcdPosition(lcd,0,1);
+				lcdPrintf(lcd,"    VALOR:%s  ",analogValue);
+				isPressed(BUTTON_2,increment,&currentMenuAnalogSensorOption,2);
+				isPressed(BUTTON_1,decrement,&currentMenuAnalogSensorOption,1);
+				break;
+			case 2:
+				lcdHome(lcd);
+				lcdPuts(lcd,"      SAIR      ");
+				lcdPosition(lcd,0,1);
+				lcdPuts(lcd,"                ");
+				isPressed(BUTTON_2,increment,&currentMenuAnalogSensorOption,2);
+				isPressed(BUTTON_1,decrement,&currentMenuAnalogSensorOption,1);
+				close(BUTTON_3,&stopLoopAnalogSensorsMenu);
+				break;
+		}
+	}
+	
+	stopLoopAnalogSensorsMenu = 0;
+	lcdClear(lcd);
+}
+
+void digitalSensorsMenu(){
+	while(!stopLoopDigitalSensorsMenu){
 		switch(currentMenuSensorOption){
 			case 1:
 				lcdHome(lcd);
@@ -519,11 +556,11 @@ void sensorsMenu(){
 				lcdPuts(lcd,"                ");
 				isPressed(BUTTON_2,increment,&currentMenuSensorOption,9);
 				isPressed(BUTTON_1,decrement,&currentMenuSensorOption,1);
-				close(BUTTON_3,&stopLoopSensorsMenu);
+				close(BUTTON_3,&stopLoopDigitalSensorsMenu);
 				break;
 		}	
 	}
-	stopLoopSensorsMenu = 0;
+	stopLoopDigitalSensorsMenu = 0;
 	lcdClear(lcd);
 }
 
@@ -545,7 +582,7 @@ void mainMenu(){
 				lcdPuts(lcd,"SENSOR DIGITAL  ");
 				isPressed(BUTTON_2,increment,&currentMenuOption,5);
 				isPressed(BUTTON_1,decrement,&currentMenuOption,1);
-				enter(BUTTON_3,sensorsMenu);
+				enter(BUTTON_3,digitalSensorsMenu);
 				break;
 			case 2:
 				lcdHome(lcd);
@@ -554,6 +591,7 @@ void mainMenu(){
 				lcdPuts(lcd,"SENSOR ANALOGICO");
 				isPressed(BUTTON_2,increment,&currentMenuOption,5);
 				isPressed(BUTTON_1,decrement,&currentMenuOption,1);
+				enter(BUTTON_3,&analogSensorsMenu);
 				break;
 			case 3:
 				lcdHome(lcd);
@@ -596,17 +634,23 @@ void mainMenu(){
 int main(int argc, char* argv[])
 {
     int rc;
+    wiringPiSetup();
+    lcd = lcdInit (2, 16, 4, LCD_RS, LCD_E, LCD_D4, LCD_D5, LCD_D6, LCD_D7,0,0,0,0);
+    pinMode(BUTTON_1,INPUT);
+    pinMode(BUTTON_2,INPUT);
+    pinMode(BUTTON_3,INPUT);
+    
     MQTTClient_connectOptions conn_opts = MQTTClient_connectOptions_initializer;
-
     conn_opts.username = USERNAME;
     conn_opts.password = PASSWORD;
     
+    
     MQTTClient_create(&client, BROKER_ADDRESS, CLIENTID,
         MQTTCLIENT_PERSISTENCE_NONE, NULL);
-    conn_opts.keepAliveInterval = 20;
+    conn_opts.keepAliveInterval = 1500;
     conn_opts.cleansession = 1;
 
-    MQTTClient_setCallbacks(client, NULL, connlost, msgarrvd, delivered);
+    MQTTClient_setCallbacks(client, NULL, connlost, msgarrvd, NULL);
     if ((rc = MQTTClient_connect(client, &conn_opts)) != MQTTCLIENT_SUCCESS)
     {
         printf("Failed to connect, return code %d\n", rc);
@@ -617,18 +661,10 @@ int main(int argc, char* argv[])
     MQTTClient_subscribe(client, RESPONSE, QOS2);
     MQTTClient_subscribe(client, ANALOG_SENSOR, QOS2);
     MQTTClient_subscribe(client, DIGITAL_SENSOR, QOS2);
-    
-    wiringPiSetup();
-    lcd = lcdInit (2, 16, 4, LCD_RS, LCD_E, LCD_D4, LCD_D5, LCD_D6, LCD_D7,0,0,0,0);
-	
-    pinMode(BUTTON_1,INPUT);
-    pinMode(BUTTON_2,INPUT);
-    pinMode(BUTTON_3,INPUT);
-	
+    send(REQUEST,GET_NODE_CONNECTION_STATUS);
+   
     mainMenu();
     finishMessage();
-    
-    MQTTClient_disconnect(client, 10000);
-    MQTTClient_destroy(&client);
+
     return rc;
  }
