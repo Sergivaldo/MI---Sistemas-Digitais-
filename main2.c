@@ -94,17 +94,20 @@ typedef struct history History;
 
 volatile MQTTClient_deliveryToken deliveredtoken;
 MQTTClient client;
-History historys[10];
+History historyList[10];
 int nextHistory = 0;
-void updateHistory(History *h){    
+void updateHistoryList(History *h){ 
+    
+    if(nextHistory == 9){
+    	memcpy(historyList, &historyList[1], 9*sizeof(*historyList));
+    }
+	
     for(int i =0;i<sizeof(digitalValues);i++){
         strcpy(h->values[i],digitalValues[i]);
     }
     
     if(nextHistory < 9){
    	nextHistory++;
-    }else{
-        memcpy(historys, &historys[1], 9*sizeof(*historys));
     }
 }
 
@@ -153,7 +156,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
 	char buf[strlen(msg)];
     	strcpy(buf,msg);
     	setDigitalValueSensors(buf);
-	updateHistory(historys[nextHistory]);
+	updateHistoryList(historyList[nextHistory]);
     }else if(strcmp(topicName,ANALOG_SENSOR) == 0){
     	analogValue = msg;
     }
