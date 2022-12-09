@@ -98,16 +98,17 @@ History historyList[10];
 int nextHistory = 0;
 void updateHistoryList(History *h){ 
     
-    if(nextHistory == 9){
-    	memcpy(historyList, &historyList[1], 9*sizeof(*historyList));
-    }
-	
-    for(int i =0;i<sizeof(digitalValues);i++){
-        strcpy(h->values[i],digitalValues[i]);
+    int lenDigitalValues = sizeof(valueDigitalSensors)/sizeof(valueDigitalSensors[0]);
+    int lenHistorys =sizeof(historyList)/sizeof(historyList[0]);
+    
+    for(int i =0;i<lenDigitalValues;i++){
+        strcpy(h->values[i],valueDigitalSensors[i]);
     }
     
     if(nextHistory < 9){
-   	nextHistory++;
+   	    nextHistory++;
+    }else{
+        memcpy(historyList,&historyList[1],9*sizeof(*historyList));
     }
 }
 
