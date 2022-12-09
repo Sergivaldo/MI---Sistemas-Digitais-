@@ -72,7 +72,7 @@ PubSubClient MQTT(espClient);
 void setTimeInterval(int sec);
 char getDigitalValue(String addr);
 void sendDigitalValues();
-void getAnalogValue();
+void sendAnalogValue();
 void getLedState();
 void setLedState();
 
@@ -133,7 +133,6 @@ void reconnect_MQTT(){
     MQTT.subscribe(REQUEST);
     MQTT.subscribe(ACTIVE_SENSOR);
     MQTT.subscribe(TIME_INTERVAL);
-    MQTT.publish(RESPONSE,"node conectada");
   } else {
     Serial.print("failed, rc=");
     Serial.print(MQTT.state());
@@ -157,7 +156,7 @@ void setActiveSensors(char * str){
       
       substr = strtok(NULL, ",");
    }
-   MQTT.publish(RESPONSE,"sensores ativos recebidos");
+
 }
 
 void receivePackage(char* topic, byte* payload, unsigned int length) {
@@ -172,19 +171,20 @@ void receivePackage(char* topic, byte* payload, unsigned int length) {
   if (strcmp(topic, REQUEST) == 0) {
 
     if (msg == SET_ON_NODEMCU_LED) {
-      setLedState(LOW);
-      MQTT.publish(RESPONSE, LED_ON);
+      setLedState(0);
+      sendLedState();
     } else if (msg == SET_OFF_NODEMCU_LED) {
-      setLedState(HIGH);
-      MQTT.publish(RESPONSE, LED_OFF);
+      setLedState(1);
+      sendLedState();
     } else if (msg == GET_NODE_CONNECTION_STATUS) {
       MQTT.publish(NODE_CONNECTION_STATUS,NODE_OK);
+      sendLedState();
     } else if (msg == GET_DIGITAL_INPUT_VALUE) {
       sendDigitalValues();
     } else if (msg == GET_ANALOG_INPUT_VALUE){
-      getAnalogValue();
+      sendAnalogValue();
     } else if (msg == GET_LED_VALUE){
-      getLedState();
+      sendLedState();
     }
   } else if (strcmp(topic, ACTIVE_SENSOR) == 0) {
       char arr[msg.length()];
@@ -251,27 +251,33 @@ void sendDigitalValues() {
 }
 
 
-void getAnalogValue() {
+void sendAnalogValue() {
     int value = analogRead(A0);
     char buf[5];
     snprintf(buf,5,"%ld",value);
     MQTT.publish(ANALOG_SENSOR, buf);
 }
 
-void getLedState(){
-  char buf[2];
-  sprintf(buf,"l%d",ledState);
-  MQTT.publish(RESPONSE,buf);
+void sendLedState(){
+  if(ledState == 1){
+    MQTT.publish(RESPONSE,LED_ON);
+  }else{
+    MQTT.publish(RESPONSE,LED_OFF);
+  }
 }
 
 void setLedState(byte state){
     digitalWrite(LED_BUILTIN,state);
-    ledState = state;
+    if(state == 1){
+      ledState = 0;  
+    }else{
+      ledState = 1;
+    }
 }
 
 void sendAll(){
   sendDigitalValues();
-  getAnalogValue();  
+  sendAnalogValue();  
 }
 
 TimedAction sendAction = TimedAction(sendInterval,sendAll);
@@ -282,7 +288,7 @@ void setTimeInterval(int sec){
 }
 void setup() {
   pinMode(LED_BUILTIN,OUTPUT);
-  setLedState(HIGH);
+  setLedState(1);
   connectWifi_OTA();
   MQTT.setServer(mqtt_server, 1883);
   MQTT.setCallback(receivePackage);
@@ -297,3 +303,4 @@ void loop() {
   MQTT.loop();
   sendAction.check();
 }
+
