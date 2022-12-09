@@ -101,10 +101,10 @@ void updateHistory(History *h){
         strcpy(h->values[i],digitalValues[i]);
     }
     
-    if(nextHistory <= 10){
+    if(nextHistory < 9){
    	nextHistory++;
     }else{
-	    
+        memcpy(historys, &historys[1], 9*sizeof(*historys));
     }
 }
 
