@@ -82,16 +82,33 @@ int timeUnitAux = 0;
 int ledState = 0;
 // Flag dos sensores digitais em uso
 char activeSensors[] = {'1','1','0','0','0','0','0','0'};
-char valueDigitalSensors[] = {'n','n','n','n','n','n','n','n'};
-char historyDigitalSensors[9][10];
-char* bufDigitalValues;
+char valueDigitalSensors[9][10] = {"n","n","n","n","n","n","n","n","hh:mm:ss"};
 char* analogValue;
+
+struct history{
+    char values[9][10];
+};
+typedef struct history History;
+
 // Funções do Cliente MQTT
 
 volatile MQTTClient_deliveryToken deliveredtoken;
 MQTTClient client;
+History historys[10];
+int nextHistory = 0;
+void updateHistory(History *h){    
+    for(int i =0;i<sizeof(digitalValues);i++){
+        strcpy(h->values[i],digitalValues[i]);
+    }
+    
+    if(nextHistory <= 10){
+   	nextHistory++;
+    }else{
+	    
+    }
+}
 
-void setDigitalValueSensors(){
+void setDigitalValueSensors(char bufDigitalValues[]){
   char * substr =  malloc(50);
   substr = strtok(bufDigitalValues, ",");
    // loop through the string to extract all other tokens
@@ -133,8 +150,10 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
 		ledState = 0;
 	}
     }else if(strcmp(topicName,DIGITAL_SENSOR) == 0){
-    	bufDigitalValues = msg;
-    	setDigitalValueSensors();
+	char buf[strlen(msg)];
+    	strcpy(buf,msg);
+    	setDigitalValueSensors(buf);
+	updateHistory(historys[nextHistory]);
     }else if(strcmp(topicName,ANALOG_SENSOR) == 0){
     	analogValue = msg;
     }
