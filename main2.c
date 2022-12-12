@@ -4,6 +4,7 @@
 #include "MQTTClient.h"
 #include <wiringPi.h>
 #include <lcd.h>
+#include <pthread.h>
 
 // configurações do cliente mqtt
 #define BROKER_ADDRESS     "tcp://10.0.0.101:1883"
@@ -23,6 +24,8 @@
 #define GET_NODE_CONNECTION_STATUS "0x08"
 #define GET_LED_VALUE "0x09"
 
+//Comandos de resposta
+#define NODE_SITUATION "0x200"
 
 // Definições dos tópicos
 #define ANALOG_SENSOR "tp04/g03/node/analog-sensor/value"
@@ -31,6 +34,7 @@
 #define RESPONSE "tp04/g03/mqtt/response/value"
 #define ADDRESS "tp04/g03/node/digital-sensor/address"
 #define NODE_CONNECTION_STATUS "tp04/g03/node/status"
+#define APP_CONNECTION_STATUS "tp04/g03/app/status"
 #define ACTIVE_SENSORS "tp04/g03/node/active-sensors"
 
 // Definições dos endereços dos sensores digitais
@@ -78,41 +82,30 @@ int timeInterval = 1;
 char timeUnit = 's';
 int timeUnitAux = 0;
 
+// Flags de conexão
+int connectionNode = 0;
+int connectionApp = 0;
+int testConnection = 0;
+
 // Led
 int ledState = 0;
+
 // Flag dos sensores digitais em uso
 char activeSensors[] = {'1','1','0','0','0','0','0','0'};
-char valueDigitalSensors[9][10] = {"n","n","n","n","n","n","n","n","hh:mm:ss"};
+char valueDigitalSensors[] = {'n','n','n','n','n','n','n','n'};
+char historyDigitalSensors[9][10];
+char* bufDigitalValues;
 char* analogValue;
-
-struct history{
-    char values[9][10];
-};
-typedef struct history History;
-
 // Funções do Cliente MQTT
 
 volatile MQTTClient_deliveryToken deliveredtoken;
 MQTTClient client;
-History historyList[10];
-int nextHistory = 0;
-void updateHistoryList(History *h){ 
-    
-    int lenDigitalValues = sizeof(valueDigitalSensors)/sizeof(valueDigitalSensors[0]);
-    int lenHistorys =sizeof(historyList)/sizeof(historyList[0]);
-    
-    for(int i =0;i<lenDigitalValues;i++){
-        strcpy(h->values[i],valueDigitalSensors[i]);
-    }
-    
-    if(nextHistory < 9){
-   	    nextHistory++;
-    }else{
-        memcpy(historyList,&historyList[1],9*sizeof(*historyList));
-    }
-}
 
-void setDigitalValueSensors(char bufDigitalValues[]){
+// Threads
+pthread_t stats_connection;
+
+
+void setDigitalValueSensors(){
   char * substr =  malloc(50);
   substr = strtok(bufDigitalValues, ",");
    // loop through the string to extract all other tokens
@@ -128,6 +121,7 @@ void setDigitalValueSensors(char bufDigitalValues[]){
       substr = strtok(NULL, ",");
    }
 }
+
 
 void send(char* topic, char* payload) {
     MQTTClient_message pubmsg = MQTTClient_message_initializer;
@@ -145,19 +139,27 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
     char* msg = message -> payload;
     if(strcmp(topicName,NODE_CONNECTION_STATUS) == 0){
     	if(strcmp(msg,"0x200") == 0){
-		send(REQUEST,GET_LED_VALUE);
+			connectionNode = 1;
+			send(REQUEST,GET_LED_VALUE);
+		}
+	}else if(strcmp(topicName, APP_CONNECTION_STATUS) == 0){
+		if(strcmp(msg, "0x200") == 0){
+			connectionApp = 1;
+		}
 	}
-    }else if(strcmp(topicName,RESPONSE) == 0){
+	else if(strcmp(topicName,RESPONSE) == 0){
     	if(strcmp(msg,"0x03") == 0){
-		ledState = 1;
-	}else if(strcmp(msg,"0x04") == 0){
-		ledState = 0;
-	}
+			ledState = 1;
+		}
+		else if(strcmp(msg,"0x04") == 0){
+			ledState = 0;
+		}
+		else if(strcmp(msg,"0x200") == 0){
+			testConnection = 0;
+		}
     }else if(strcmp(topicName,DIGITAL_SENSOR) == 0){
-	char buf[strlen(msg)];
-    	strcpy(buf,msg);
-    	setDigitalValueSensors(buf);
-	updateHistoryList(historyList[nextHistory]);
+    	bufDigitalValues = msg;
+    	setDigitalValueSensors();
     }else if(strcmp(topicName,ANALOG_SENSOR) == 0){
     	analogValue = msg;
     }
@@ -250,11 +252,12 @@ int decrement(int valueController, int min){
 }
 
 //Encerrar o sistema
-void finishMessage(){
+void finish(){
 	lcdClear(lcd);
 	lcdPuts(lcd,"     SAINDO     ");
 	delay(1500);
 	lcdClear(lcd);
+	pthread_join(stats_connection,NULL);
 }
 
 // Ajustar o intervalo de tempo em que os sensores serão atualizados
@@ -595,7 +598,7 @@ void mainMenu(){
 				lcdPuts(lcd,"     MI - SD    ");
 				lcdPosition(lcd,0,1);
 				lcdPuts(lcd,"   Problema 3   ");
-				isPressed(BUTTON_2,increment,&currentMenuOption,5);
+				isPressed(BUTTON_2,increment,&currentMenuOption,6);
 				isPressed(BUTTON_1,decrement,&currentMenuOption,1);
 				break;
 			case 1:
@@ -603,7 +606,7 @@ void mainMenu(){
 				lcdPuts(lcd,"LEITURA:        ");
 				lcdPosition(lcd,0,1);
 				lcdPuts(lcd,"SENSOR DIGITAL  ");
-				isPressed(BUTTON_2,increment,&currentMenuOption,5);
+				isPressed(BUTTON_2,increment,&currentMenuOption,6);
 				isPressed(BUTTON_1,decrement,&currentMenuOption,1);
 				enter(BUTTON_3,digitalSensorsMenu);
 				break;
@@ -612,7 +615,7 @@ void mainMenu(){
 				lcdPuts(lcd,"LEITURA:        ");
 				lcdPosition(lcd,0,1);
 				lcdPuts(lcd,"SENSOR ANALOGICO");
-				isPressed(BUTTON_2,increment,&currentMenuOption,5);
+				isPressed(BUTTON_2,increment,&currentMenuOption,6);
 				isPressed(BUTTON_1,decrement,&currentMenuOption,1);
 				enter(BUTTON_3,&analogSensorsMenu);
 				break;
@@ -625,7 +628,7 @@ void mainMenu(){
 				}
 				lcdPosition(lcd,0,1);
 				lcdPuts(lcd,"                ");
-				isPressed(BUTTON_2,increment,&currentMenuOption,5);
+				isPressed(BUTTON_2,increment,&currentMenuOption,6);
 				isPressed(BUTTON_1,decrement,&currentMenuOption,1);
 				enter(BUTTON_3,setLedState);
 				break;
@@ -635,17 +638,23 @@ void mainMenu(){
 				lcdPuts(lcd,"  CONFIGURACOES ");
 				lcdPosition(lcd,0,1);
 				lcdPuts(lcd,"                ");
-				isPressed(BUTTON_2,increment,&currentMenuOption,5);
+				isPressed(BUTTON_2,increment,&currentMenuOption,6);
 				isPressed(BUTTON_1,decrement,&currentMenuOption,1);
 				enter(BUTTON_3,configMenu);
 				break;
-
 			case 5:
+				lcdHome(lcd);
+				lcdPuts(lcd,"     CONEXAO    ");
+				lcdPosition(lcd,0,1);
+				lcdPuts(lcd,"                ");
+				isPressed(BUTTON_2,increment,&currentMenuOption,6);
+				isPressed(BUTTON_1,decrement,&currentMenuOption,1);
+			case 6:
 				lcdHome(lcd);
 				lcdPuts(lcd,"      SAIR      ");
 				lcdPosition(lcd,0,1);
 				lcdPuts(lcd,"                ");
-				isPressed(BUTTON_2,increment,&currentMenuOption,5);
+				isPressed(BUTTON_2,increment,&currentMenuOption,6);
 				isPressed(BUTTON_1,decrement,&currentMenuOption,1);
 				close(BUTTON_3,&stopLoopMainMenu);
 				break;
@@ -653,6 +662,24 @@ void mainMenu(){
 		}
 	}
 }
+
+void *checkConnections(void *arg){
+
+	while (1){
+		testConnection = 1;
+		send(REQUEST, GET_NODE_CONNECTION_STATUS);
+		delay(5000);
+		if(testConnection == 1){
+			connectionNode = -1;
+		}else{
+			connectionNode = 1;
+		}
+		printf("Testando conexão\n");
+		printf("%d",connectionNode);
+	}
+}
+
+
 
 int main(int argc, char* argv[])
 {
@@ -662,7 +689,7 @@ int main(int argc, char* argv[])
     pinMode(BUTTON_1,INPUT);
     pinMode(BUTTON_2,INPUT);
     pinMode(BUTTON_3,INPUT);
-    
+ 
     MQTTClient_connectOptions conn_opts = MQTTClient_connectOptions_initializer;
     conn_opts.username = USERNAME;
     conn_opts.password = PASSWORD;
@@ -685,9 +712,9 @@ int main(int argc, char* argv[])
     MQTTClient_subscribe(client, ANALOG_SENSOR, QOS2);
     MQTTClient_subscribe(client, DIGITAL_SENSOR, QOS2);
     send(REQUEST,GET_NODE_CONNECTION_STATUS);
-   
+    pthread_create(&stats_connection, NULL, checkConnections, NULL);
     mainMenu();
-    finishMessage();
+    finish();
 
     return rc;
  }
