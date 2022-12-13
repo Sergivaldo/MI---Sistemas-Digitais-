@@ -162,6 +162,9 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
 		else if(strcmp(msg,"0x200") == 0){
 			testConnection = 0;
 		}
+		else if(strcmp(msg,"0xFA") == 0){
+			printf("Intervalo mudado");
+		}
     }else if(strcmp(topicName,DIGITAL_SENSOR) == 0){
     	bufDigitalValues = msg;
     	setDigitalValueSensors();
@@ -184,11 +187,11 @@ void connlost(void *context, char *cause)
 // Funções do menu lcd
 
 // Debounce
-void isPressed(int btt, int (*function)(int, int), int* controller, int minMax){
+void isPressed(int btt, int (*function)(int, int, int), int* controller, int max,int min){
 	if(digitalRead(btt) == 0){
 		delay(90);
 		if(digitalRead(btt) == 0){
-			*controller = function(*controller, minMax);
+			*controller = function(*controller, max, min);
 			while(digitalRead(btt) == 0);
 		}
 	} 	
@@ -241,18 +244,22 @@ void closeSetSensors(int btt,int* stopFlag,void (*function)(void)){
 }
 
 // Incrementa uma variável se não tiver atingido seu valor máximo
-int increment(int valueController, int max){
-	if(valueController < max){
-		valueController++;
+int increment(int valueController, int max, int min){
+	valueController++;
+	if(valueController > max){
+		valueController = min;
 	}
+	
 	return valueController;
 }
 
 // Decrementa uma variável se não tiver atingido seu valor mínimo
-int decrement(int valueController, int min){
-	if(valueController > min){
-		valueController--;
+int decrement(int valueController, int max, int min){
+	valueController--;
+	if(valueController < min){
+		valueController = max;
 	}
+	
 	return valueController;
 }
 
@@ -281,8 +288,8 @@ void setTimeInterval(){
 		}
 		
 		lcdPrintf(lcd,"10%c ",timeUnit);
-		isPressed(BUTTON_2,increment,&timeInterval,10);
-		isPressed(BUTTON_1,decrement,&timeInterval,1);
+		isPressed(BUTTON_2,increment,&timeInterval,10,1);
+		isPressed(BUTTON_1,decrement,&timeInterval,10,1);
 		close(BUTTON_3,&stopLoopSetTimeInterval);
 	}
 	if(timeUnit == 'h'){
@@ -326,8 +333,8 @@ void setTimeUnit(){
 		}
 		lcdPosition(lcd,0,1);
 		lcdPuts(lcd,"                ");	
-		isPressed(BUTTON_2,increment,&timeUnitAux,2);
-		isPressed(BUTTON_1,decrement,&timeUnitAux,0);
+		isPressed(BUTTON_2,increment,&timeUnitAux,2,0);
+		isPressed(BUTTON_1,decrement,&timeUnitAux,2,0);
 		close(BUTTON_3,&stopLoopSetTimeUnit);	
 	}
 	lcdClear(lcd);
@@ -342,18 +349,18 @@ void sendActiveSensors(){
 
 void statusSensorMessage(int index){
 	if(activeSensors[index] == '1'){
-		lcdPuts(lcd,"     ATIVADO    ");
+		lcdPuts(lcd,"ATIVADO         ");
 	}else{
-		lcdPuts(lcd,"   DESATIVADO   ");
+		lcdPuts(lcd,"DESATIVADO      ");
 	}
 }
 
 void valueDigitalSensor(int index){
 
 	if(activeSensors[index] == '1'){
-		lcdPrintf(lcd,"     VALOR:%c    ",valueDigitalSensors[index]);
+		lcdPrintf(lcd,"VALOR:%c         ",valueDigitalSensors[index]);
 	}else{
-		lcdPuts(lcd,"   DESATIVADO   ");
+		lcdPuts(lcd,"DESATIVADO      ");
 	}
 }
 
@@ -364,74 +371,74 @@ void setUsedSensors(){
 		switch(currentUsedSensorsOption){
 			case 1:
 				lcdHome(lcd);
-				lcdPuts(lcd,"   SENSOR D0:   ");
+				lcdPuts(lcd,"SENSOR D0:      ");
 				lcdPosition(lcd,0,1);
 				statusSensorMessage(0);
-				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,9);
-				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,1);
+				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,9,1);
+				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,9,1);
 				toggleState(BUTTON_3, 0);
 				break;
 			case 2:
 				lcdHome(lcd);
-				lcdPuts(lcd,"   SENSOR D1:   ");
+				lcdPuts(lcd,"SENSOR D1:      ");
 				lcdPosition(lcd,0,1);
 				statusSensorMessage(1);
-				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,9);
-				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,1);
+				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,9,1);
+				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,9,1);
 				toggleState(BUTTON_3, 1);
 				break;
 			case 3:
 				lcdHome(lcd);
-				lcdPuts(lcd,"   SENSOR D2:   ");
+				lcdPuts(lcd,"SENSOR D2:      ");
 				lcdPosition(lcd,0,1);
 				statusSensorMessage(2);
-				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,9);
-				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,1);
+				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,9,1);
+				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,9,1);
 				toggleState(BUTTON_3, 2);
 				break;
 			case 4:
 				lcdHome(lcd);
-				lcdPuts(lcd,"   SENSOR D3:   ");
+				lcdPuts(lcd,"SENSOR D3:      ");
 				lcdPosition(lcd,0,1);
 				statusSensorMessage(3);
-				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,9);
-				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,1);
+				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,9,1);
+				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,9,1);
 				toggleState(BUTTON_3, 3);
 				break;
 			case 5:
 				lcdHome(lcd);
-				lcdPuts(lcd,"   SENSOR D4:   ");
+				lcdPuts(lcd,"SENSOR D4:      ");
 				lcdPosition(lcd,0,1);
 				statusSensorMessage(4);
-				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,9);
-				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,1);
+				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,9,1);
+				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,9,1);
 				toggleState(BUTTON_3, 4);
 				break;
 			case 6:
 				lcdHome(lcd);
-				lcdPuts(lcd,"   SENSOR D5:   ");
+				lcdPuts(lcd,"SENSOR D5:      ");
 				lcdPosition(lcd,0,1);
 				statusSensorMessage(5);
-				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,9);
-				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,1);
+				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,9,1);
+				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,9,1);
 				toggleState(BUTTON_3, 5);
 				break;
 			case 7:
 				lcdHome(lcd);
-				lcdPuts(lcd,"   SENSOR D6:   ");
+				lcdPuts(lcd,"SENSOR D6:      ");
 				lcdPosition(lcd,0,1);
 				statusSensorMessage(6);
-				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,9);
-				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,1);
+				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,9,1);
+				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,9,1);
 				toggleState(BUTTON_3, 6);
 				break;
 			case 8:
 				lcdHome(lcd);
-				lcdPuts(lcd,"   SENSOR D7:   ");
+				lcdPuts(lcd,"SENSOR D7:      ");
 				lcdPosition(lcd,0,1);
 				statusSensorMessage(7);
-				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,9);
-				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,1);
+				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,9,1);
+				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,9,1);
 				toggleState(BUTTON_3, 7);
 				break;
 			case 9:
@@ -439,8 +446,8 @@ void setUsedSensors(){
 				lcdPuts(lcd,"      SAIR      ");
 				lcdPosition(lcd,0,1);
 				lcdPuts(lcd,"                ");
-				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,9);
-				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,1);
+				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,9,1);
+				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,9,1);
 				close(BUTTON_3,&stopLoopSetUsedSensors);
 				break;
 		}
@@ -458,8 +465,8 @@ void configMenu(){
 				lcdPuts(lcd,"     AJUSTAR    ");
 				lcdPosition(lcd,0,1);
 				lcdPuts(lcd,"    INTERVALO   ");
-				isPressed(BUTTON_2,increment,&currentMenuIntervalOption,4);
-				isPressed(BUTTON_1,decrement,&currentMenuIntervalOption,1);
+				isPressed(BUTTON_2,increment,&currentMenuIntervalOption,4,1);
+				isPressed(BUTTON_1,decrement,&currentMenuIntervalOption,4,1);
 				enter(BUTTON_3,setTimeInterval);
 				break;
 			case 2:
@@ -467,8 +474,8 @@ void configMenu(){
 				lcdPuts(lcd,"     AJUSTAR    ");
 				lcdPosition(lcd,0,1);
 				lcdPuts(lcd,"   UNID. TEMPO  ");
-				isPressed(BUTTON_2,increment,&currentMenuIntervalOption,4);
-				isPressed(BUTTON_1,decrement,&currentMenuIntervalOption,1);
+				isPressed(BUTTON_2,increment,&currentMenuIntervalOption,4,1);
+				isPressed(BUTTON_1,decrement,&currentMenuIntervalOption,4,1);
 				enter(BUTTON_3,setTimeUnit);
 				break;
 			case 3:
@@ -476,8 +483,8 @@ void configMenu(){
 				lcdPuts(lcd,"  ESPECIFICAR   ");
 				lcdPosition(lcd,0,1);
 				lcdPuts(lcd,"SENSORES ATIVOS ");
-				isPressed(BUTTON_2,increment,&currentMenuIntervalOption,4);
-				isPressed(BUTTON_1,decrement,&currentMenuIntervalOption,1);
+				isPressed(BUTTON_2,increment,&currentMenuIntervalOption,4,1);
+				isPressed(BUTTON_1,decrement,&currentMenuIntervalOption,4,1);
 				enter(BUTTON_3,setUsedSensors);
 				break;
 			case 4:
@@ -485,8 +492,8 @@ void configMenu(){
 				lcdPuts(lcd,"      SAIR      ");
 				lcdPosition(lcd,0,1);
 				lcdPuts(lcd,"                ");
-				isPressed(BUTTON_2,increment,&currentMenuIntervalOption,4);
-				isPressed(BUTTON_1,decrement,&currentMenuIntervalOption,1);
+				isPressed(BUTTON_2,increment,&currentMenuIntervalOption,4,1);
+				isPressed(BUTTON_1,decrement,&currentMenuIntervalOption,4,1);
 				close(BUTTON_3,&stopLoopConfigMenu);
 				break;
 		}
@@ -495,6 +502,7 @@ void configMenu(){
 	char buf[10];
 	sprintf(buf,"%ld",timeSeconds);
 	send(TIME_INTERVAL,buf);
+	
 	stopLoopConfigMenu = 0;
 	currentMenuIntervalOption = 1;
 	lcdClear(lcd);
@@ -509,16 +517,16 @@ void analogSensorsMenu(){
 				lcdPuts(lcd,"    SENSOR A0   ");
 				lcdPosition(lcd,0,1);
 				lcdPrintf(lcd,"    VALOR:%s  ",analogValue);
-				isPressed(BUTTON_2,increment,&currentMenuAnalogSensorOption,2);
-				isPressed(BUTTON_1,decrement,&currentMenuAnalogSensorOption,1);
+				isPressed(BUTTON_2,increment,&currentMenuAnalogSensorOption,2,1);
+				isPressed(BUTTON_1,decrement,&currentMenuAnalogSensorOption,2,1);
 				break;
 			case 2:
 				lcdHome(lcd);
 				lcdPuts(lcd,"      SAIR      ");
 				lcdPosition(lcd,0,1);
 				lcdPuts(lcd,"                ");
-				isPressed(BUTTON_2,increment,&currentMenuAnalogSensorOption,2);
-				isPressed(BUTTON_1,decrement,&currentMenuAnalogSensorOption,1);
+				isPressed(BUTTON_2,increment,&currentMenuAnalogSensorOption,2,1);
+				isPressed(BUTTON_1,decrement,&currentMenuAnalogSensorOption,2,1);
 				close(BUTTON_3,&stopLoopAnalogSensorsMenu);
 				break;
 		}
@@ -534,75 +542,75 @@ void digitalSensorsMenu(){
 		switch(currentMenuSensorOption){
 			case 1:
 				lcdHome(lcd);
-				lcdPuts(lcd,"    SENSOR D0   ");
+				lcdPuts(lcd,"SENSOR D0       ");
 				lcdPosition(lcd,0,1);
 				valueDigitalSensor(0);
-				isPressed(BUTTON_2,increment,&currentMenuSensorOption,9);
-				isPressed(BUTTON_1,decrement,&currentMenuSensorOption,1);
+				isPressed(BUTTON_2,increment,&currentMenuSensorOption,9,1);
+				isPressed(BUTTON_1,decrement,&currentMenuSensorOption,9,1);
 				break;
 			case 2:
 				lcdHome(lcd);
-				lcdPuts(lcd,"    SENSOR D1   ");
+				lcdPuts(lcd,"SENSOR D1       ");
 				lcdPosition(lcd,0,1);
 				valueDigitalSensor(1);
-				isPressed(BUTTON_2,increment,&currentMenuSensorOption,9);
-				isPressed(BUTTON_1,decrement,&currentMenuSensorOption,1);
+				isPressed(BUTTON_2,increment,&currentMenuSensorOption,9,1);
+				isPressed(BUTTON_1,decrement,&currentMenuSensorOption,9,1);
 				break;
 			case 3:
 			    lcdHome(lcd);
-				lcdPuts(lcd,"    SENSOR D2   ");
+				lcdPuts(lcd,"SENSOR D2       ");
 				lcdPosition(lcd,0,1);
 				valueDigitalSensor(2);
-				isPressed(BUTTON_2,increment,&currentMenuSensorOption,9);
-				isPressed(BUTTON_1,decrement,&currentMenuSensorOption,1);
+				isPressed(BUTTON_2,increment,&currentMenuSensorOption,9,1);
+				isPressed(BUTTON_1,decrement,&currentMenuSensorOption,9,1);
 				break;
 			case 4:
 				lcdHome(lcd);
-				lcdPuts(lcd,"    SENSOR D3   ");
+				lcdPuts(lcd,"SENSOR D3       ");
 				lcdPosition(lcd,0,1);
 				valueDigitalSensor(3);
-				isPressed(BUTTON_2,increment,&currentMenuSensorOption,9);
-				isPressed(BUTTON_1,decrement,&currentMenuSensorOption,1);
+				isPressed(BUTTON_2,increment,&currentMenuSensorOption,9,1);
+				isPressed(BUTTON_1,decrement,&currentMenuSensorOption,9,1);
 				break;
 			case 5:
 				lcdHome(lcd);
-				lcdPuts(lcd,"    SENSOR D4   ");
+				lcdPuts(lcd,"SENSOR D4       ");
 				lcdPosition(lcd,0,1);
 				valueDigitalSensor(4);
-				isPressed(BUTTON_2,increment,&currentMenuSensorOption,9);
-				isPressed(BUTTON_1,decrement,&currentMenuSensorOption,1);
+				isPressed(BUTTON_2,increment,&currentMenuSensorOption,9,1);
+				isPressed(BUTTON_1,decrement,&currentMenuSensorOption,9,1);
 				break;
 			case 6:
 				lcdHome(lcd);
-				lcdPuts(lcd,"    SENSOR D5   ");
+				lcdPuts(lcd,"SENSOR D5       ");
 				lcdPosition(lcd,0,1);
 				valueDigitalSensor(5);
-				isPressed(BUTTON_2,increment,&currentMenuSensorOption,9);
-				isPressed(BUTTON_1,decrement,&currentMenuSensorOption,1);
+				isPressed(BUTTON_2,increment,&currentMenuSensorOption,9,1);
+				isPressed(BUTTON_1,decrement,&currentMenuSensorOption,9,1);
 				break;
 			case 7:
 				lcdHome(lcd);
-				lcdPuts(lcd,"    SENSOR D6   ");
+				lcdPuts(lcd,"SENSOR D6       ");
 				lcdPosition(lcd,0,1);
 				valueDigitalSensor(6);
-				isPressed(BUTTON_2,increment,&currentMenuSensorOption,9);
-				isPressed(BUTTON_1,decrement,&currentMenuSensorOption,1);
+				isPressed(BUTTON_2,increment,&currentMenuSensorOption,9,1);
+				isPressed(BUTTON_1,decrement,&currentMenuSensorOption,9,1);
 				break;
 			case 8:
 				lcdHome(lcd);
-				lcdPuts(lcd,"    SENSOR D7   ");
+				lcdPuts(lcd,"SENSOR D7       ");
 				lcdPosition(lcd,0,1);
 				valueDigitalSensor(7);
-				isPressed(BUTTON_2,increment,&currentMenuSensorOption,9);
-				isPressed(BUTTON_1,decrement,&currentMenuSensorOption,1);
+				isPressed(BUTTON_2,increment,&currentMenuSensorOption,9,1);
+				isPressed(BUTTON_1,decrement,&currentMenuSensorOption,9,1);
 				break;
 			case 9:
 				lcdHome(lcd);
 				lcdPuts(lcd,"      SAIR      ");
 				lcdPosition(lcd,0,1);
 				lcdPuts(lcd,"                ");
-				isPressed(BUTTON_2,increment,&currentMenuSensorOption,9);
-				isPressed(BUTTON_1,decrement,&currentMenuSensorOption,1);
+				isPressed(BUTTON_2,increment,&currentMenuSensorOption,9,1);
+				isPressed(BUTTON_1,decrement,&currentMenuSensorOption,9,1);
 				close(BUTTON_3,&stopLoopDigitalSensorsMenu);
 				break;
 		}	
@@ -624,8 +632,8 @@ void connectionStatusMenu(){
 				}else if(connectionNode == 1){
 				    lcdPuts(lcd,"STATUS: ONLINE ");
 				}
-				isPressed(BUTTON_2,increment,&currentConnectionStatusOption,3);
-				isPressed(BUTTON_1,decrement,&currentConnectionStatusOption,1);
+				isPressed(BUTTON_2,increment,&currentConnectionStatusOption,3,1);
+				isPressed(BUTTON_1,decrement,&currentConnectionStatusOption,3,1);
 				break;
             case 2:
                 		lcdHome(lcd);
@@ -636,16 +644,16 @@ void connectionStatusMenu(){
 				}else if(connectionApp == 1){
 				    lcdPuts(lcd,"STATUS: ONLINE ");
 				}
-				isPressed(BUTTON_2,increment,&currentConnectionStatusOption,3);
-				isPressed(BUTTON_1,decrement,&currentConnectionStatusOption,1);
+				isPressed(BUTTON_2,increment,&currentConnectionStatusOption,3,1);
+				isPressed(BUTTON_1,decrement,&currentConnectionStatusOption,3,1);
 				break;
             case 3:
                 		lcdHome(lcd);
 				lcdPuts(lcd,"      SAIR      ");
 				lcdPosition(lcd,0,1);
 				lcdPuts(lcd,"                ");
-				isPressed(BUTTON_2,increment,&currentConnectionStatusOption,3);
-				isPressed(BUTTON_1,decrement,&currentConnectionStatusOption,1);
+				isPressed(BUTTON_2,increment,&currentConnectionStatusOption,3,1);
+				isPressed(BUTTON_1,decrement,&currentConnectionStatusOption,3,1);
 				close(BUTTON_3,&stopLoopConnectionStatusMenu);
 				break;
         }
@@ -663,16 +671,16 @@ void mainMenu(){
 				lcdPuts(lcd,"     MI - SD    ");
 				lcdPosition(lcd,0,1);
 				lcdPuts(lcd,"   Problema 3   ");
-				isPressed(BUTTON_2,increment,&currentMenuOption,6);
-				isPressed(BUTTON_1,decrement,&currentMenuOption,1);
+				isPressed(BUTTON_2,increment,&currentMenuOption,6,1);
+				isPressed(BUTTON_1,decrement,&currentMenuOption,6,1);
 				break;
 			case 1:
 				lcdHome(lcd);
 				lcdPuts(lcd,"LEITURA:        ");
 				lcdPosition(lcd,0,1);
 				lcdPuts(lcd,"SENSOR DIGITAL  ");
-				isPressed(BUTTON_2,increment,&currentMenuOption,6);
-				isPressed(BUTTON_1,decrement,&currentMenuOption,1);
+				isPressed(BUTTON_2,increment,&currentMenuOption,6,1);
+				isPressed(BUTTON_1,decrement,&currentMenuOption,6,1);
 				enter(BUTTON_3,digitalSensorsMenu);
 				break;
 			case 2:
@@ -680,8 +688,8 @@ void mainMenu(){
 				lcdPuts(lcd,"LEITURA:        ");
 				lcdPosition(lcd,0,1);
 				lcdPuts(lcd,"SENSOR ANALOGICO");
-				isPressed(BUTTON_2,increment,&currentMenuOption,6);
-				isPressed(BUTTON_1,decrement,&currentMenuOption,1);
+				isPressed(BUTTON_2,increment,&currentMenuOption,6,1);
+				isPressed(BUTTON_1,decrement,&currentMenuOption,6,1);
 				enter(BUTTON_3,&analogSensorsMenu);
 				break;
 			case 3:
@@ -693,8 +701,8 @@ void mainMenu(){
 				}
 				lcdPosition(lcd,0,1);
 				lcdPuts(lcd,"                ");
-				isPressed(BUTTON_2,increment,&currentMenuOption,6);
-				isPressed(BUTTON_1,decrement,&currentMenuOption,1);
+				isPressed(BUTTON_2,increment,&currentMenuOption,6,1);
+				isPressed(BUTTON_1,decrement,&currentMenuOption,6,1);
 				enter(BUTTON_3,setLedState);
 				break;
 
@@ -703,8 +711,8 @@ void mainMenu(){
 				lcdPuts(lcd,"  CONFIGURACOES ");
 				lcdPosition(lcd,0,1);
 				lcdPuts(lcd,"                ");
-				isPressed(BUTTON_2,increment,&currentMenuOption,6);
-				isPressed(BUTTON_1,decrement,&currentMenuOption,1);
+				isPressed(BUTTON_2,increment,&currentMenuOption,6,1);
+				isPressed(BUTTON_1,decrement,&currentMenuOption,6,1);
 				enter(BUTTON_3,configMenu);
 				break;
 			case 5:
@@ -712,8 +720,8 @@ void mainMenu(){
 				lcdPuts(lcd,"     STATUS     ");
 				lcdPosition(lcd,0,1);
 				lcdPuts(lcd,"  DAS CONEXOES  ");
-				isPressed(BUTTON_2,increment,&currentMenuOption,6);
-				isPressed(BUTTON_1,decrement,&currentMenuOption,1);
+				isPressed(BUTTON_2,increment,&currentMenuOption,6,1);
+				isPressed(BUTTON_1,decrement,&currentMenuOption,6,1);
 				enter(BUTTON_3,connectionStatusMenu);
 				break;
 			case 6:
@@ -721,8 +729,8 @@ void mainMenu(){
 				lcdPuts(lcd,"      SAIR      ");
 				lcdPosition(lcd,0,1);
 				lcdPuts(lcd,"                ");
-				isPressed(BUTTON_2,increment,&currentMenuOption,6);
-				isPressed(BUTTON_1,decrement,&currentMenuOption,1);
+				isPressed(BUTTON_2,increment,&currentMenuOption,6,1);
+				isPressed(BUTTON_1,decrement,&currentMenuOption,6,1);
 				close(BUTTON_3,&stopLoopMainMenu);
 				break;
 
