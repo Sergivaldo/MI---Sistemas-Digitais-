@@ -5,6 +5,7 @@
 #include <wiringPi.h>
 #include <lcd.h>
 #include <pthread.h>
+#include <time.h>
 
 // configurações do cliente mqtt
 #define BROKER_ADDRESS     "tcp://10.0.0.101:1883"
@@ -63,13 +64,6 @@
 #define BUTTON_2 23
 #define BUTTON_3 25
 
-// Structs
-struct digitalValue {
-    char value[9];
-    char measurementTime[9];
-}initDigitalValue={{'n','n','n','n','n','n','n','n'},"HH:MM:SS"};
-
-
 int lcd;
 
 // Controles de navegação dos menus
@@ -107,7 +101,8 @@ int ledState = 0;
 // Flag dos sensores digitais em uso
 char activeSensors[] = {'1','1','0','0','0','0','0','0'};
 
-char valueDigitalSensors[] = {'n','n','n','n','n','n','n','n'};
+char lastValueDigitalSensors[] = {'n','n','n','n','n','n','n','n'};
+char timeLastValueDigitalSensors[9] = "HH:MM:SS";
 char* bufDigitalValues;
 char analogValue[5];
 
@@ -118,9 +113,7 @@ MQTTClient client;
 
 // Threads
 pthread_t stats_connection;
-
-
-typedef struct digitalValue DigitalValue;
+pthread_t time_now;
 
 void setDigitalValueSensors(){
   char * substr =  malloc(50);
@@ -133,7 +126,7 @@ void setDigitalValueSensors(){
 
       char *pinValue = malloc(2);
       strncpy(pinValue, substr+3,1);
-      valueDigitalSensors[index] = *pinValue;
+      lastValueDigitalSensors[index] = *pinValue;
 
       substr = strtok(NULL, ",");
    }
@@ -272,6 +265,7 @@ void finish(){
 	delay(1500);
 	lcdClear(lcd);
 	pthread_join(stats_connection,NULL);
+	pthread_join(time_now,NULL);
 }
 
 // Ajustar o intervalo de tempo em que os sensores serão atualizados
@@ -360,7 +354,7 @@ void statusSensorMessage(int index){
 void valueDigitalSensor(int index){
 
 	if(activeSensors[index] == '1'){
-		lcdPrintf(lcd,"VALOR:%c         ",valueDigitalSensors[index]);
+		lcdPrintf(lcd,"VALOR:%c         ",lastValueDigitalSensors[index]);
 	}else{
 		lcdPuts(lcd,"DESATIVADO      ");
 	}
@@ -755,7 +749,11 @@ void *checkConnections(void *arg){
 	}
 }
 
-
+void *getTime(void *arg){
+	while(1){
+		
+	}
+}
 
 int main(int argc, char* argv[])
 {
@@ -789,6 +787,8 @@ int main(int argc, char* argv[])
     MQTTClient_subscribe(client, DIGITAL_SENSOR, QOS2);
     send(REQUEST,GET_NODE_CONNECTION_STATUS);
     pthread_create(&stats_connection, NULL, checkConnections, NULL);
+    pthread_create(&time_now, NULL, getTime, NULL);
+    
     mainMenu();
     finish();
 
