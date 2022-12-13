@@ -69,6 +69,8 @@ int currentMenuSensorOption = 1;
 int currentMenuAnalogSensorOption = 1;
 int currentMenuIntervalOption = 1;
 int currentUsedSensorsOption = 1;
+int currentConnectionStatusOption = 1;
+
 // Flags de parada
 int stopLoopMainMenu = 0;
 int stopLoopConfigMenu = 0;
@@ -77,6 +79,8 @@ int stopLoopAnalogSensorsMenu = 0;
 int stopLoopSetTimeInterval = 0;
 int stopLoopSetTimeUnit = 0;
 int stopLoopSetUsedSensors = 0;
+int stopLoopConnectionStatusMenu = 0;
+
 // Intervalo de Tempo
 int timeInterval = 1;
 char timeUnit = 's';
@@ -87,15 +91,16 @@ int connectionNode = 0;
 int connectionApp = 0;
 int testConnection = 0;
 
-// Led
+// Flag de estado do led
 int ledState = 0;
 
 // Flag dos sensores digitais em uso
 char activeSensors[] = {'1','1','0','0','0','0','0','0'};
+
 char valueDigitalSensors[] = {'n','n','n','n','n','n','n','n'};
-char historyDigitalSensors[9][10];
 char* bufDigitalValues;
 char* analogValue;
+
 // Funções do Cliente MQTT
 
 volatile MQTTClient_deliveryToken deliveredtoken;
@@ -104,6 +109,13 @@ MQTTClient client;
 // Threads
 pthread_t stats_connection;
 
+// Structs
+struct digitalValue {
+    char value[9];
+    char measurementTime[9];
+}initDigitalValue={{'n','n','n','n','n','n','n','n'},"HH:MM:SS"};
+
+typedef struct digitalValue DigitalValue;
 
 void setDigitalValueSensors(){
   char * substr =  malloc(50);
@@ -590,6 +602,48 @@ void digitalSensorsMenu(){
 	lcdClear(lcd);
 }
 
+void connectionStatusMenu(){
+    while(!stopLoopConnectionStatusMenu){
+        switch(currentConnectionStatusOption){
+            case 1:
+                lcdHome(lcd);
+				lcdPuts(lcd,"NODEMCU         ");
+				lcdPosition(lcd,0,1);
+                if(connectionNode == -1){
+                    lcdPuts(lcd,"STATUS: OFFLINE");
+                }else if(connectionNode == 1){
+                    lcdPuts(lcd,"STATUS: ONLINE ");
+                }
+				isPressed(BUTTON_2,increment,&currentConnectionStatusOption,2);
+				isPressed(BUTTON_1,decrement,&currentConnectionStatusOption,1);
+				break;
+            case 2:
+                lcdHome(lcd);
+				lcdPuts(lcd,"APP         ");
+				lcdPosition(lcd,0,1);
+                if(connectionApp == -1){
+                    lcdPuts(lcd,"STATUS: OFFLINE");
+                }else if(connectionApp == 1){
+                    lcdPuts(lcd,"STATUS: ONLINE ");
+                }
+				isPressed(BUTTON_2,increment,&currentConnectionStatusOption,2);
+				isPressed(BUTTON_1,decrement,&currentConnectionStatusOption,1);
+				break;
+            case 3:
+                lcdHome(lcd);
+				lcdPuts(lcd,"      SAIR      ");
+				lcdPosition(lcd,0,1);
+				lcdPuts(lcd,"                ");
+				isPressed(BUTTON_2,increment,&currentConnectionStatusOption,2);
+				isPressed(BUTTON_1,decrement,&currentConnectionStatusOption,1);
+				close(BUTTON_3,&stopLoopConnectionStatusMenu);
+				break;
+        }
+    }
+    stopLoopConnectionStatusMenu = 0;
+    lcdClear(lcd);
+}
+
 void mainMenu(){
 	while(!stopLoopMainMenu){
 		switch(currentMenuOption){
@@ -644,9 +698,9 @@ void mainMenu(){
 				break;
 			case 5:
 				lcdHome(lcd);
-				lcdPuts(lcd,"     CONEXAO    ");
+				lcdPuts(lcd,"     STATUS     ");
 				lcdPosition(lcd,0,1);
-				lcdPuts(lcd,"                ");
+				lcdPuts(lcd,"  DAS CONEXOES  ");
 				isPressed(BUTTON_2,increment,&currentMenuOption,6);
 				isPressed(BUTTON_1,decrement,&currentMenuOption,1);
 			case 6:
