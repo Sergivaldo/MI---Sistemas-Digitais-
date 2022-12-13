@@ -18,18 +18,7 @@
 #define STAPSK  "Pbl-Sistemas-Digitais"
 #endif
 
-//Constantes e variaveis
-const char* ssid = STASSID;
-const char* password = STAPSK;
 
-const char* mqtt_server = "10.0.0.101";
-const char *mqtt_username = "aluno";
-const char *mqtt_password = "@luno*123";
-
-byte ledState = HIGH;
-String address = "D0";
-char activeSensors[] = {'1', '1', '0', '0', '0', '0', '0', '0'};
-unsigned int sendInterval = 1000;
 // Comandos de resposta
 
 #define ANALOG_INPUT_VALUE "0x01"
@@ -66,8 +55,7 @@ unsigned int sendInterval = 1000;
 #define ADDR_D6 "D6"
 #define ADDR_D7 "D7"
 
-WiFiClient espClient;
-PubSubClient MQTT(espClient);
+#define INIT_SEND_INTERVAl 1000
 
 void setTimeInterval(int sec);
 char getDigitalValue(String addr);
@@ -75,6 +63,22 @@ void sendDigitalValues();
 void sendAnalogValue();
 void getLedState();
 void setLedState();
+
+//Constantes e variaveis
+const char* ssid = STASSID;
+const char* password = STAPSK;
+
+const char* mqtt_server = "10.0.0.101";
+const char *mqtt_username = "aluno";
+const char *mqtt_password = "@luno*123";
+
+byte ledState = HIGH;
+String address = "D0";
+char activeSensors[] = {'1', '1', '0', '0', '0', '0', '0', '0'};
+unsigned int sendInterval = INIT_SEND_INTERVAl;
+
+WiFiClient espClient;
+PubSubClient MQTT(espClient);
 
 void connectWifi_OTA() {
   Serial.begin(9600);
