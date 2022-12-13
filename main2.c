@@ -827,7 +827,6 @@ int main(int argc, char* argv[])
     MQTTClient_subscribe(client, ANALOG_SENSOR, QOS2);
     MQTTClient_subscribe(client, DIGITAL_SENSOR, QOS2);
     send(REQUEST,GET_NODE_CONNECTION_STATUS);
-    sendActiveSensors();
     pthread_create(&stats_connection, NULL, checkConnections, NULL);
     pthread_create(&time_now, NULL, getTime, NULL);
     
