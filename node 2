@@ -28,8 +28,8 @@ const char *mqtt_password = "@luno*123";
 
 byte ledState = HIGH;
 String address = "D0";
-char activeSensors[] = {'1','1','0','0','0','0','0','0'};
-unsigned int sendInterval = 2000;
+char activeSensors[] = {'1', '1', '0', '0', '0', '0', '0', '0'};
+unsigned int sendInterval = 1000;
 // Comandos de resposta
 
 #define ANALOG_INPUT_VALUE "0x01"
@@ -76,7 +76,7 @@ void sendAnalogValue();
 void getLedState();
 void setLedState();
 
-void connectWifi_OTA(){
+void connectWifi_OTA() {
   Serial.begin(9600);
   delay(10);
   Serial.println("Booting");
@@ -85,7 +85,8 @@ void connectWifi_OTA(){
   while (WiFi.waitForConnectResult() != WL_CONNECTED) {
     Serial.println("Connection Failed! Rebooting...");
     delay(5000);
-    ESP.restart();}
+    ESP.restart();
+  }
 
   ArduinoOTA.setHostname("ESP-10.0.0.108");
 
@@ -125,10 +126,10 @@ void connectWifi_OTA(){
   Serial.println(WiFi.localIP());
 }
 
-void reconnect_MQTT(){
+void reconnect_MQTT() {
   Serial.print("Attempting MQTT connection...");
   String clientId = "N-TP04/G03";
-  if (MQTT.connect(clientId.c_str(),mqtt_username,mqtt_password)) {
+  if (MQTT.connect(clientId.c_str(), mqtt_username, mqtt_password)) {
     Serial.println("connected");
     MQTT.subscribe(REQUEST);
     MQTT.subscribe(ACTIVE_SENSOR);
@@ -141,21 +142,21 @@ void reconnect_MQTT(){
   }
 }
 
-void setActiveSensors(char * str){
+void setActiveSensors(char * str) {
   char *substr;
   substr = strtok(str, ",");
-   // loop through the string to extract all other tokens
-  while( substr != NULL ) {
-      char pinName[2];
-      strncpy(pinName, substr,2);
-      int index = ((int)pinName[1]) - ((int)'0');
-      
-      char pinValue[2];
-      strncpy(pinValue, substr+3,1);
-      activeSensors[index] = *pinValue;
-      
-      substr = strtok(NULL, ",");
-   }
+  // loop through the string to extract all other tokens
+  while ( substr != NULL ) {
+    char pinName[2];
+    strncpy(pinName, substr, 2);
+    int index = ((int)pinName[1]) - ((int)'0');
+
+    char pinValue[2];
+    strncpy(pinValue, substr + 3, 1);
+    activeSensors[index] = *pinValue;
+
+    substr = strtok(NULL, ",");
+  }
 
 }
 
@@ -177,21 +178,21 @@ void receivePackage(char* topic, byte* payload, unsigned int length) {
       setLedState(1);
       sendLedState();
     } else if (msg == GET_NODE_CONNECTION_STATUS) {
-      MQTT.publish(RESPONSE,NODE_OK);
+      MQTT.publish(RESPONSE, NODE_OK);
       sendLedState();
     } else if (msg == GET_DIGITAL_INPUT_VALUE) {
       sendDigitalValues();
-    } else if (msg == GET_ANALOG_INPUT_VALUE){
+    } else if (msg == GET_ANALOG_INPUT_VALUE) {
       sendAnalogValue();
-    } else if (msg == GET_LED_VALUE){
+    } else if (msg == GET_LED_VALUE) {
       sendLedState();
     }
   } else if (strcmp(topic, ACTIVE_SENSOR) == 0) {
-      char arr[msg.length()];
-      msg.toCharArray(arr,msg.length());
-      setActiveSensors(arr);
+    char arr[msg.length()];
+    msg.toCharArray(arr, msg.length());
+    setActiveSensors(arr);
   } else if (strcmp(topic, TIME_INTERVAL) == 0) {
-    MQTT.publish(RESPONSE,"mudando intervalo");
+    MQTT.publish(RESPONSE, "mudando intervalo");
     setTimeInterval(msg.toInt());
   }
 
@@ -221,14 +222,14 @@ char getDigitalValue(String addr) {
   } else if (addr == "D7") {
     value = digitalRead(D7);
   }
-  
-  if(value == 1){
+
+  if (value == 1) {
     valueCh = '1';
-  }else if(value == 0){
+  } else if (value == 0) {
     valueCh = '0';
   }
-  sprintf(buff,"%d",value);
-  MQTT.publish(RESPONSE,buff);
+  sprintf(buff, "%d", value);
+  MQTT.publish(RESPONSE, buff);
   return valueCh;
 }
 
@@ -237,66 +238,65 @@ void sendDigitalValues() {
   char buf[9];
   char msg[50];
 
-  for(int i = 0;i <sizeof(activeSensors);i++){
-    if(activeSensors[i] == '1'){
-       String pinName = "D" + String(i);
-       buf[i] = getDigitalValue(pinName);
-    }else{
+  for (int i = 0; i < sizeof(activeSensors); i++) {
+    if (activeSensors[i] == '1') {
+      String pinName = "D" + String(i);
+      buf[i] = getDigitalValue(pinName);
+    } else {
       buf[i] = 'n';
     }
   }
-  MQTT.publish(RESPONSE,"enviando sinal digital");
-  sprintf(msg,"D0-%c,D1-%c,D2-%c,D3-%c,D4-%c,D5-%c,D6-%c,D7-%c",buf[0],buf[1],buf[2],buf[3],buf[4],buf[5],buf[6],buf[7]);
+  sprintf(msg, "D0-%c,D1-%c,D2-%c,D3-%c,D4-%c,D5-%c,D6-%c,D7-%c", buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]);
   MQTT.publish(DIGITAL_SENSOR, msg);
 }
 
 
 void sendAnalogValue() {
-    int value = analogRead(A0);
-    char buf[5];
-    snprintf(buf,5,"%ld",value);
-    MQTT.publish(ANALOG_SENSOR, buf);
+  int value = analogRead(A0);
+  char buf[5];
+  sprintf(buf,"%d",value);
+  MQTT.publish(ANALOG_SENSOR, buf);
 }
 
-void sendLedState(){
-  if(ledState == 1){
-    MQTT.publish(RESPONSE,LED_ON);
-  }else{
-    MQTT.publish(RESPONSE,LED_OFF);
+void sendLedState() {
+  if (ledState == 1) {
+    MQTT.publish(RESPONSE, LED_ON);
+  } else {
+    MQTT.publish(RESPONSE, LED_OFF);
   }
 }
 
-void setLedState(byte state){
-    digitalWrite(LED_BUILTIN,state);
-    if(state == 1){
-      ledState = 0;  
-    }else{
-      ledState = 1;
-    }
+void setLedState(byte state) {
+  digitalWrite(LED_BUILTIN, state);
+  if (state == 1) {
+    ledState = 0;
+  } else {
+    ledState = 1;
+  }
 }
 
-void sendAll(){
+void sendAll() {
   sendDigitalValues();
-  sendAnalogValue();  
+  sendAnalogValue();
 }
 
-TimedAction sendAction = TimedAction(sendInterval,sendAll);
+TimedAction sendAction = TimedAction(sendInterval, sendAll);
 
-void setTimeInterval(int sec){
+void setTimeInterval(int sec) {
   sendInterval = sec * 1000;
   sendAction.setInterval(sendInterval);
 }
 void setup() {
-  pinMode(LED_BUILTIN,OUTPUT);
+  pinMode(LED_BUILTIN, OUTPUT);
   setLedState(1);
   connectWifi_OTA();
   MQTT.setServer(mqtt_server, 1883);
   MQTT.setCallback(receivePackage);
-  
+
 }
 
 void loop() {
-  if(!MQTT.connected()){
+  if (!MQTT.connected()) {
     reconnect_MQTT();
   }
   ArduinoOTA.handle();
