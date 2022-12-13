@@ -177,7 +177,7 @@ void receivePackage(char* topic, byte* payload, unsigned int length) {
       setLedState(1);
       sendLedState();
     } else if (msg == GET_NODE_CONNECTION_STATUS) {
-      MQTT.publish(NODE_CONNECTION_STATUS,NODE_OK);
+      MQTT.publish(RESPONSE,NODE_OK);
       sendLedState();
     } else if (msg == GET_DIGITAL_INPUT_VALUE) {
       sendDigitalValues();
