@@ -192,7 +192,6 @@ void receivePackage(char* topic, byte* payload, unsigned int length) {
     msg.toCharArray(arr, msg.length());
     setActiveSensors(arr);
   } else if (strcmp(topic, TIME_INTERVAL) == 0) {
-    MQTT.publish(RESPONSE, "mudando intervalo");
     setTimeInterval(msg.toInt());
   }
 
@@ -285,6 +284,7 @@ TimedAction sendAction = TimedAction(sendInterval, sendAll);
 void setTimeInterval(int sec) {
   sendInterval = sec * 1000;
   sendAction.setInterval(sendInterval);
+  MQTT.publish(RESPONSE, "0xFA");
 }
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
