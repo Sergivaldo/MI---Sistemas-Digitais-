@@ -96,8 +96,8 @@ int connectionApp = -1;
 int testConnection = 0;
 
 typedef struct{
-	values[8];
-	time[10];
+	char values[8];
+	char time[10];
 }History;
 
 // Flag de estado do led
