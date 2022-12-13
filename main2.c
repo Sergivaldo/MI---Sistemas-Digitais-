@@ -95,6 +95,11 @@ int connectionNode = -1;
 int connectionApp = -1;
 int testConnection = 0;
 
+typedef struct{
+	values[8];
+	time[10];
+}History;
+
 // Flag de estado do led
 int ledState = 0;
 
@@ -102,9 +107,12 @@ int ledState = 0;
 char activeSensors[] = {'1','1','0','0','0','0','0','0'};
 
 char lastValueDigitalSensors[] = {'n','n','n','n','n','n','n','n'};
-char timeLastValueDigitalSensors[9] = "HH:MM:SS";
+char timeLastValueDigitalSensors[10];
+char currentTime[10];
 char* bufDigitalValues;
 char analogValue[5];
+
+History historyList[10];
 
 // Funções do Cliente MQTT
 
@@ -130,6 +138,7 @@ void setDigitalValueSensors(){
 
       substr = strtok(NULL, ",");
    }
+   strcpy(timeLastValueDigitalSensors, currentTime);
 }
 
 
@@ -667,16 +676,16 @@ void mainMenu(){
 				lcdPuts(lcd,"     MI - SD    ");
 				lcdPosition(lcd,0,1);
 				lcdPuts(lcd,"   Problema 3   ");
-				isPressed(BUTTON_2,increment,&currentMenuOption,6,1);
-				isPressed(BUTTON_1,decrement,&currentMenuOption,6,1);
+				isPressed(BUTTON_2,increment,&currentMenuOption,7,1);
+				isPressed(BUTTON_1,decrement,&currentMenuOption,7,1);
 				break;
 			case 1:
 				lcdHome(lcd);
 				lcdPuts(lcd,"LEITURA:        ");
 				lcdPosition(lcd,0,1);
 				lcdPuts(lcd,"SENSOR DIGITAL  ");
-				isPressed(BUTTON_2,increment,&currentMenuOption,6,1);
-				isPressed(BUTTON_1,decrement,&currentMenuOption,6,1);
+				isPressed(BUTTON_2,increment,&currentMenuOption,7,1);
+				isPressed(BUTTON_1,decrement,&currentMenuOption,7,1);
 				enter(BUTTON_3,digitalSensorsMenu);
 				break;
 			case 2:
@@ -684,8 +693,8 @@ void mainMenu(){
 				lcdPuts(lcd,"LEITURA:        ");
 				lcdPosition(lcd,0,1);
 				lcdPuts(lcd,"SENSOR ANALOGICO");
-				isPressed(BUTTON_2,increment,&currentMenuOption,6,1);
-				isPressed(BUTTON_1,decrement,&currentMenuOption,6,1);
+				isPressed(BUTTON_2,increment,&currentMenuOption,7,1);
+				isPressed(BUTTON_1,decrement,&currentMenuOption,7,1);
 				enter(BUTTON_3,&analogSensorsMenu);
 				break;
 			case 3:
@@ -697,8 +706,8 @@ void mainMenu(){
 				}
 				lcdPosition(lcd,0,1);
 				lcdPuts(lcd,"                ");
-				isPressed(BUTTON_2,increment,&currentMenuOption,6,1);
-				isPressed(BUTTON_1,decrement,&currentMenuOption,6,1);
+				isPressed(BUTTON_2,increment,&currentMenuOption,7,1);
+				isPressed(BUTTON_1,decrement,&currentMenuOption,7,1);
 				enter(BUTTON_3,setLedState);
 				break;
 
@@ -707,8 +716,8 @@ void mainMenu(){
 				lcdPuts(lcd,"  CONFIGURACOES ");
 				lcdPosition(lcd,0,1);
 				lcdPuts(lcd,"                ");
-				isPressed(BUTTON_2,increment,&currentMenuOption,6,1);
-				isPressed(BUTTON_1,decrement,&currentMenuOption,6,1);
+				isPressed(BUTTON_2,increment,&currentMenuOption,7,1);
+				isPressed(BUTTON_1,decrement,&currentMenuOption,7,1);
 				enter(BUTTON_3,configMenu);
 				break;
 			case 5:
@@ -716,17 +725,26 @@ void mainMenu(){
 				lcdPuts(lcd,"     STATUS     ");
 				lcdPosition(lcd,0,1);
 				lcdPuts(lcd,"  DAS CONEXOES  ");
-				isPressed(BUTTON_2,increment,&currentMenuOption,6,1);
-				isPressed(BUTTON_1,decrement,&currentMenuOption,6,1);
+				isPressed(BUTTON_2,increment,&currentMenuOption,7,1);
+				isPressed(BUTTON_1,decrement,&currentMenuOption,7,1);
 				enter(BUTTON_3,connectionStatusMenu);
 				break;
 			case 6:
 				lcdHome(lcd);
+				lcdPuts(lcd,"     HORARIO     ");
+				lcdPosition(lcd,0,1);
+				lcdPrintf(lcd,"    %s    ",timeLastValueDigitalSensors);
+				isPressed(BUTTON_2,increment,&currentMenuOption,7,1);
+				isPressed(BUTTON_1,decrement,&currentMenuOption,7,1);
+				enter(BUTTON_3,connectionStatusMenu);
+				break;
+			case 7:
+				lcdHome(lcd);
 				lcdPuts(lcd,"      SAIR      ");
 				lcdPosition(lcd,0,1);
 				lcdPuts(lcd,"                ");
-				isPressed(BUTTON_2,increment,&currentMenuOption,6,1);
-				isPressed(BUTTON_1,decrement,&currentMenuOption,6,1);
+				isPressed(BUTTON_2,increment,&currentMenuOption,7,1);
+				isPressed(BUTTON_1,decrement,&currentMenuOption,7,1);
 				close(BUTTON_3,&stopLoopMainMenu);
 				break;
 
@@ -750,9 +768,32 @@ void *checkConnections(void *arg){
 }
 
 void *getTime(void *arg){
-	while(1){
-		
-	}
+	 //ponteiro para struct que armazena data e hora  
+	  struct tm *timeNow;     
+	  
+	  //variável do tipo time_t para armazenar o tempo em segundos  
+	  time_t seconds;
+	  while(1){
+	      //obtendo o tempo em segundos  
+	      time(&seconds);   
+	  
+	      //para converter de segundos para o tempo local  
+	      //utilizamos a função localtime  
+	      timeNow = localtime(&seconds);  
+	      
+	      char buf_hour[3];
+	      char buf_min[3];
+	      char buf_sec[3];
+	      
+	      timeNow -> tm_hour-3 <=9 ? sprintf(buf_hour,"0%d",(timeNow -> tm_hour-3)):sprintf(buf_hour,"%d",(timeNow -> tm_hour-3));
+	    
+	      timeNow -> tm_min <=9 ? sprintf(buf_min,"0%d",(timeNow -> tm_min)):sprintf(buf_min,"%d",(timeNow -> tm_min));
+	    
+	      timeNow -> tm_sec <=9 ? sprintf(buf_sec,"0%d",(timeNow -> tm_sec)):sprintf(buf_sec,"%d",(timeNow -> tm_sec));
+	      
+	      sprintf(currentTime,"%s:%s:%s",buf_hour,buf_min,buf_sec);
+      
+  }
 }
 
 int main(int argc, char* argv[])
@@ -786,6 +827,7 @@ int main(int argc, char* argv[])
     MQTTClient_subscribe(client, ANALOG_SENSOR, QOS2);
     MQTTClient_subscribe(client, DIGITAL_SENSOR, QOS2);
     send(REQUEST,GET_NODE_CONNECTION_STATUS);
+    sendActiveSensors();
     pthread_create(&stats_connection, NULL, checkConnections, NULL);
     pthread_create(&time_now, NULL, getTime, NULL);
     
