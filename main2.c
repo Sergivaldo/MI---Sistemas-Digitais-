@@ -63,6 +63,13 @@
 #define BUTTON_2 23
 #define BUTTON_3 25
 
+// Structs
+struct digitalValue {
+    char value[9];
+    char measurementTime[9];
+}initDigitalValue={{'n','n','n','n','n','n','n','n'},"HH:MM:SS"};
+
+
 int lcd;
 
 // Controles de navegação dos menus
@@ -112,11 +119,6 @@ MQTTClient client;
 // Threads
 pthread_t stats_connection;
 
-// Structs
-struct digitalValue {
-    char value[9];
-    char measurementTime[9];
-}initDigitalValue={{'n','n','n','n','n','n','n','n'},"HH:MM:SS"};
 
 typedef struct digitalValue DigitalValue;
 
@@ -749,8 +751,7 @@ void *checkConnections(void *arg){
 		}else{
 			connectionNode = 1;
 		}
-		printf("Testando conexão\n");
-		printf("%d",connectionNode);
+		
 	}
 }
 
