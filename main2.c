@@ -36,6 +36,8 @@
 #define NODE_CONNECTION_STATUS "tp04/g03/node/status"
 #define APP_CONNECTION_STATUS "tp04/g03/app/status"
 #define ACTIVE_SENSORS "tp04/g03/node/active-sensors"
+#define TIME_INTERVAL "tp04/g03/node/time-interval"
+
 
 // Definições dos endereços dos sensores digitais
 
@@ -85,10 +87,11 @@ int stopLoopConnectionStatusMenu = 0;
 int timeInterval = 1;
 char timeUnit = 's';
 int timeUnitAux = 0;
+long int timeSeconds = 0;
 
 // Flags de conexão
-int connectionNode = 0;
-int connectionApp = 0;
+int connectionNode = -1;
+int connectionApp = -1;
 int testConnection = 0;
 
 // Flag de estado do led
@@ -99,7 +102,7 @@ char activeSensors[] = {'1','1','0','0','0','0','0','0'};
 
 char valueDigitalSensors[] = {'n','n','n','n','n','n','n','n'};
 char* bufDigitalValues;
-char* analogValue;
+char analogValue[5];
 
 // Funções do Cliente MQTT
 
@@ -149,18 +152,8 @@ void send(char* topic, char* payload) {
 int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *message)
 {
     char* msg = message -> payload;
-    if(strcmp(topicName,NODE_CONNECTION_STATUS) == 0){
-    	if(strcmp(msg,"0x200") == 0){
-			connectionNode = 1;
-			send(REQUEST,GET_LED_VALUE);
-		}
-	}else if(strcmp(topicName, APP_CONNECTION_STATUS) == 0){
-		if(strcmp(msg, "0x200") == 0){
-			connectionApp = 1;
-		}
-	}
-	else if(strcmp(topicName,RESPONSE) == 0){
-    	if(strcmp(msg,"0x03") == 0){
+	if(strcmp(topicName,RESPONSE) == 0){
+    		if(strcmp(msg,"0x03") == 0){
 			ledState = 1;
 		}
 		else if(strcmp(msg,"0x04") == 0){
@@ -173,7 +166,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
     	bufDigitalValues = msg;
     	setDigitalValueSensors();
     }else if(strcmp(topicName,ANALOG_SENSOR) == 0){
-    	analogValue = msg;
+    	strcpy(analogValue,msg);
     }
 	
     MQTTClient_freeMessage(&message);
@@ -291,6 +284,13 @@ void setTimeInterval(){
 		isPressed(BUTTON_2,increment,&timeInterval,10);
 		isPressed(BUTTON_1,decrement,&timeInterval,1);
 		close(BUTTON_3,&stopLoopSetTimeInterval);
+	}
+	if(timeUnit == 'h'){
+		timeSeconds = timeInterval * 3600;
+	} else if(timeUnit == 'm'){
+		timeSeconds = timeInterval * 60;
+	}else{
+		timeSeconds = timeInterval; 
 	}
 	stopLoopSetTimeInterval = 0;
 	lcdClear(lcd);
@@ -441,10 +441,13 @@ void setUsedSensors(){
 				lcdPuts(lcd,"                ");
 				isPressed(BUTTON_2,increment,&currentUsedSensorsOption,9);
 				isPressed(BUTTON_1,decrement,&currentUsedSensorsOption,1);
-				closeSetSensors(BUTTON_3,&stopLoopSetUsedSensors,sendActiveSensors);
+				close(BUTTON_3,&stopLoopSetUsedSensors);
 				break;
 		}
 	}
+	stopLoopSetUsedSensors = 0;
+	currentUsedSensorsOption = 1;
+	lcdClear(lcd);
 }
 
 void configMenu(){
@@ -488,7 +491,12 @@ void configMenu(){
 				break;
 		}
 	}
+	sendActiveSensors();
+	char buf[10];
+	sprintf(buf,"%ld",timeSeconds);
+	send(TIME_INTERVAL,buf);
 	stopLoopConfigMenu = 0;
+	currentMenuIntervalOption = 1;
 	lcdClear(lcd);
 }
 
@@ -517,6 +525,7 @@ void analogSensorsMenu(){
 	}
 	
 	stopLoopAnalogSensorsMenu = 0;
+	currentMenuAnalogSensorOption = 1;
 	lcdClear(lcd);
 }
 
@@ -599,6 +608,7 @@ void digitalSensorsMenu(){
 		}	
 	}
 	stopLoopDigitalSensorsMenu = 0;
+	currentMenuSensorOption = 1;
 	lcdClear(lcd);
 }
 
@@ -606,41 +616,42 @@ void connectionStatusMenu(){
     while(!stopLoopConnectionStatusMenu){
         switch(currentConnectionStatusOption){
             case 1:
-                lcdHome(lcd);
+                		lcdHome(lcd);
 				lcdPuts(lcd,"NODEMCU         ");
 				lcdPosition(lcd,0,1);
-                if(connectionNode == -1){
-                    lcdPuts(lcd,"STATUS: OFFLINE");
-                }else if(connectionNode == 1){
-                    lcdPuts(lcd,"STATUS: ONLINE ");
-                }
-				isPressed(BUTTON_2,increment,&currentConnectionStatusOption,2);
+				if(connectionNode == -1){
+				    lcdPuts(lcd,"STATUS: OFFLINE");
+				}else if(connectionNode == 1){
+				    lcdPuts(lcd,"STATUS: ONLINE ");
+				}
+				isPressed(BUTTON_2,increment,&currentConnectionStatusOption,3);
 				isPressed(BUTTON_1,decrement,&currentConnectionStatusOption,1);
 				break;
             case 2:
-                lcdHome(lcd);
+                		lcdHome(lcd);
 				lcdPuts(lcd,"APP         ");
 				lcdPosition(lcd,0,1);
-                if(connectionApp == -1){
-                    lcdPuts(lcd,"STATUS: OFFLINE");
-                }else if(connectionApp == 1){
-                    lcdPuts(lcd,"STATUS: ONLINE ");
-                }
-				isPressed(BUTTON_2,increment,&currentConnectionStatusOption,2);
+				if(connectionApp == -1){
+				    lcdPuts(lcd,"STATUS: OFFLINE");
+				}else if(connectionApp == 1){
+				    lcdPuts(lcd,"STATUS: ONLINE ");
+				}
+				isPressed(BUTTON_2,increment,&currentConnectionStatusOption,3);
 				isPressed(BUTTON_1,decrement,&currentConnectionStatusOption,1);
 				break;
             case 3:
-                lcdHome(lcd);
+                		lcdHome(lcd);
 				lcdPuts(lcd,"      SAIR      ");
 				lcdPosition(lcd,0,1);
 				lcdPuts(lcd,"                ");
-				isPressed(BUTTON_2,increment,&currentConnectionStatusOption,2);
+				isPressed(BUTTON_2,increment,&currentConnectionStatusOption,3);
 				isPressed(BUTTON_1,decrement,&currentConnectionStatusOption,1);
 				close(BUTTON_3,&stopLoopConnectionStatusMenu);
 				break;
         }
     }
     stopLoopConnectionStatusMenu = 0;
+    currentConnectionStatusOption = 1;
     lcdClear(lcd);
 }
 
@@ -703,6 +714,8 @@ void mainMenu(){
 				lcdPuts(lcd,"  DAS CONEXOES  ");
 				isPressed(BUTTON_2,increment,&currentMenuOption,6);
 				isPressed(BUTTON_1,decrement,&currentMenuOption,1);
+				enter(BUTTON_3,connectionStatusMenu);
+				break;
 			case 6:
 				lcdHome(lcd);
 				lcdPuts(lcd,"      SAIR      ");
