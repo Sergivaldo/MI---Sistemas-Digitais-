@@ -29,18 +29,18 @@
 #define NODE_SITUATION "0x200"
 
 // Definições dos tópicos de comunicação com a ORANGE PI
-#define RESPONSE "tp04/g03/mqtt/response/value"              #Respostas da NODE
+#define RESPONSE "tp04/g03/mqtt/response/value"              //Respostas da NODE
 
 // Definições dos tópicos de comunicação com a NODE
-#define REQUEST "tp04/g03/mqtt/request/value"                #Enviar algum comando de requisição
-#define ANALOG_SENSOR "tp04/g03/node/analog-sensor/value"    #Receber a medição analogico
-#define DIGITAL_SENSOR "tp04/g03/node/digital-sensor/value"  #Receber as medições digitais       
-#define NODE_CONNECTION_STATUS "tp04/g03/node/status"        #Receber o status da conexão com a NODE
-#define ACTIVE_SENSORS "tp04/g03/node/active-sensors"        #Enviar a configuração dos sensores digitais
-#define TIME_INTERVAL "tp04/g03/node/time-interval"          #Enviar o intervalo de atualização dos sensores
+#define REQUEST "tp04/g03/mqtt/request/value"                //Enviar algum comando de requisição
+#define ANALOG_SENSOR "tp04/g03/node/analog-sensor/value"    //Receber a medição analogico
+#define DIGITAL_SENSOR "tp04/g03/node/digital-sensor/value"  //Receber as medições digitais       
+#define NODE_CONNECTION_STATUS "tp04/g03/node/status"        //Receber o status da conexão com a NODE
+#define ACTIVE_SENSORS "tp04/g03/node/active-sensors"        //Enviar a configuração dos sensores digitais
+#define TIME_INTERVAL "tp04/g03/node/time-interval"          //Enviar o intervalo de atualização dos sensores
 
 // Definções dos topicos de comunicação com o APP
-#define APP_CONNECTION_STATUS "tp04/g03/app/status"          #Receber o status de conexão com o APP
+#define APP_CONNECTION_STATUS "tp04/g03/app/status"          //Receber o status de conexão com o APP
 
 // Definições dos endereços dos sensores digitais
 
