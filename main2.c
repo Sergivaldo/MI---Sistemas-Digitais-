@@ -113,6 +113,7 @@ char* bufDigitalValues;
 char analogValue[5];
 
 History historyList[10];
+int nextHistory = 0;
 
 // Funções do Cliente MQTT
 
@@ -122,6 +123,15 @@ MQTTClient client;
 // Threads
 pthread_t stats_connection;
 pthread_t time_now;
+
+void updateHistory(int nextHistory){
+	int lenList = sizeof(historyList)/sizeof(historyList[0]);
+	if(nextHistory < lenList - 1){
+		sprintf(historyList[nextHistory],"%c,%c,%c,%c,%c,%c,%c,%c",)
+		strcpy(historyList[nextHistory].time,timeLastValueDigitalSensors);
+		nextHistory++;
+	}
+}
 
 void setDigitalValueSensors(){
   char * substr =  malloc(50);
@@ -139,6 +149,7 @@ void setDigitalValueSensors(){
       substr = strtok(NULL, ",");
    }
    strcpy(timeLastValueDigitalSensors, currentTime);
+
 }
 
 
