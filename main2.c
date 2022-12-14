@@ -77,6 +77,7 @@ int currentUsedSensorsOption = 1;
 int currentConnectionStatusOption = 1;
 int currentHistoryMenuOption = 1;
 int currentHistoryDigitalSensorOption = 1;
+int currentHistoryAnalogSensorOption = 1;
 
 // Flags de parada
 int stopLoopMainMenu = 0;
@@ -89,6 +90,7 @@ int stopLoopSetUsedSensors = 0;
 int stopLoopConnectionStatusMenu = 0;
 int stopLoopHistoryMenu = 0;
 int stopLoopHistoryDigitalSensors = 0;
+int stopLoopHistoryAnalogSensors = 0;
 
 // Intervalo de Tempo
 int timeInterval = 1;
@@ -114,13 +116,14 @@ char activeSensors[] = {'1','1','0','0','0','0','0','0'};
 
 char lastValueDigitalSensors[] = {'n','n','n','n','n','n','n','n'};
 char timeLastValueDigitalSensors[10];
-char currentTime[10];
 char* bufDigitalValues;
-char analogValue[5];
-
-History historyList[10];
-int nextHistory = 0;
-
+char* bufAnalogValue;
+char lastAnalogValue[5];
+char timeLastValueAnalogSensors[10];
+History historyListDigital[10];
+History historyListAnalog[10];
+int nextHistoryDigital = 0;
+int nextHistoryAnalog = 0;
 // Funções do Cliente MQTT
 
 volatile MQTTClient_deliveryToken deliveredtoken;
@@ -131,7 +134,7 @@ pthread_t stats_connection;
 pthread_t time_now;
 
 
-void getTime(){
+void getTime(char buf[]){
 	//ponteiro para struct que armazena data e hora  
 	struct tm *timeNow;     
 	
@@ -155,20 +158,33 @@ void getTime(){
 
 	timeNow -> tm_sec <=9 ? sprintf(buf_sec,"0%d",(timeNow -> tm_sec)):sprintf(buf_sec,"%d",(timeNow -> tm_sec));
 	
-	sprintf(timeLastValueDigitalSensors,"%s:%s:%s",buf_hour,buf_min,buf_sec);
+	sprintf(buf,"%s:%s:%s",buf_hour,buf_min,buf_sec);
       
 }
 
-void updateHistory(int next){
+void updateHistoryDigital(int next){
 	if(next < 10){
-		sprintf(historyList[next].values,"%c,%c,%c,%c,%c,%c,%c,%c",lastValueDigitalSensors[0],lastValueDigitalSensors[1],lastValueDigitalSensors[2],lastValueDigitalSensors[3],lastValueDigitalSensors[4],lastValueDigitalSensors[5],lastValueDigitalSensors[6],lastValueDigitalSensors[7]);
-		strcpy(historyList[next].time,timeLastValueDigitalSensors);
-		nextHistory++;
+		sprintf(historyListDigital[next].values,"%c,%c,%c,%c,%c,%c,%c,%c",lastValueDigitalSensors[0],lastValueDigitalSensors[1],lastValueDigitalSensors[2],lastValueDigitalSensors[3],lastValueDigitalSensors[4],lastValueDigitalSensors[5],lastValueDigitalSensors[6],lastValueDigitalSensors[7]);
+		strcpy(historyListDigital[next].time,timeLastValueDigitalSensors);
+		nextHistoryDigital++;
 	}else{
-		memcpy(historyList, &historyList[1], 9*sizeof(*historyList));
-		sprintf(historyList[9].values,"%c,%c,%c,%c,%c,%c,%c,%c",lastValueDigitalSensors[0],lastValueDigitalSensors[1],lastValueDigitalSensors[2],lastValueDigitalSensors[3],lastValueDigitalSensors[4],lastValueDigitalSensors[5],lastValueDigitalSensors[6],lastValueDigitalSensors[7]);
-		strcpy(historyList[9].time,timeLastValueDigitalSensors);
+		memcpy(historyListDigital, &historyListDigital[1], 9*sizeof(*historyListDigital));
+		sprintf(historyListDigital[9].values,"%c,%c,%c,%c,%c,%c,%c,%c",lastValueDigitalSensors[0],lastValueDigitalSensors[1],lastValueDigitalSensors[2],lastValueDigitalSensors[3],lastValueDigitalSensors[4],lastValueDigitalSensors[5],lastValueDigitalSensors[6],lastValueDigitalSensors[7]);
+		strcpy(historyListDigital[9].time,timeLastValueDigitalSensors);
 	}
+}
+
+void updateHistoryAnalog(int next){
+	if(next<10){
+		sprintf(historyListAnalog[next].values,"%s",lastAnalogValue);
+		strcpy(historyListAnalog[next].time,timeLastValueAnalogSensors);
+		nextHistoryAnalog++;
+	}else{
+		memcpy(historyListAnalog, &historyListAnalog[1], 9*sizeof(*historyListAnalog));
+		sprintf(historyListAnalog[next].values,"%s",lastAnalogValue);
+		strcpy(historyListAnalog[9].time,timeLastValueAnalogSensors);
+	}
+	
 }
 
 void setDigitalValueSensors(){
@@ -186,10 +202,15 @@ void setDigitalValueSensors(){
 
       substr = strtok(NULL, ",");
    }
-   getTime();
-   updateHistory(nextHistory);
+   getTime(timeLastValueDigitalSensors);
+   updateHistoryDigital(nextHistoryDigital);
 }
 
+void setAnalogValueSensors(){
+	strcpy(lastAnalogValue,bufAnalogValue);
+	getTime(timeLastValueAnalogSensors);
+	updateHistoryAnalog(nextHistoryAnalog);
+}
 
 void send(char* topic, char* payload) {
     MQTTClient_message pubmsg = MQTTClient_message_initializer;
@@ -222,7 +243,8 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
     	bufDigitalValues = msg;
     	setDigitalValueSensors();
     }else if(strcmp(topicName,ANALOG_SENSOR) == 0){
-    	strcpy(analogValue,msg);
+		bufAnalogValue = msg;
+    	setAnalogValueSensors();
     }
 	
     MQTTClient_freeMessage(&message);
@@ -568,7 +590,7 @@ void analogSensorsMenu(){
 				lcdHome(lcd);
 				lcdPuts(lcd,"    SENSOR A0   ");
 				lcdPosition(lcd,0,1);
-				lcdPrintf(lcd,"    VALOR:%s  ",analogValue);
+				lcdPrintf(lcd,"    VALOR:%s  ",lastAnalogValue);
 				isPressed(BUTTON_2,increment,&currentMenuAnalogSensorOption,2,1);
 				isPressed(BUTTON_1,decrement,&currentMenuAnalogSensorOption,2,1);
 				break;
@@ -717,108 +739,220 @@ void connectionStatusMenu(){
 
 void historyDigitalSensors(){
 	lcdClear(lcd);
+	
 	while(!stopLoopHistoryDigitalSensors){
-		switch(currentHistoryDigitalSensorOption){
-			case 1:
-				lcdHome(lcd);
-				lcdPrintf(lcd,"%s ",historyList[0].values);
-				lcdPosition(lcd,0,1);
-				lcdPrintf(lcd,"H01-> %s",historyList[0].time);
-				isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,nextHistory,1);
-				isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,nextHistory,1);
-				close(BUTTON_3,&stopLoopHistoryDigitalSensors);
-				break;
-			case 2:
-				lcdHome(lcd);
-				lcdPrintf(lcd,"%s ",historyList[1].values);
-				lcdPosition(lcd,0,1);
-				lcdPrintf(lcd,"H02-> %s",historyList[1].time);
-				isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,nextHistory,1);
-				isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,nextHistory,1);
-				close(BUTTON_3,&stopLoopHistoryDigitalSensors);
-				break;
-			case 3:
-			    lcdHome(lcd);
-				lcdPrintf(lcd,"%s ",historyList[2].values);
-				lcdPosition(lcd,0,1);
-				lcdPrintf(lcd,"H03-> %s",historyList[2].time);
-				isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,nextHistory,1);
-				isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,nextHistory,1);
-				close(BUTTON_3,&stopLoopHistoryDigitalSensors);
-				break;
-			case 4:
-				lcdHome(lcd);
-				lcdPrintf(lcd,"%s ",historyList[3].values);
-				lcdPosition(lcd,0,1);
-				lcdPrintf(lcd,"H04-> %s",historyList[3].time);
-				isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,nextHistory,1);
-				isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,nextHistory,1);
-				close(BUTTON_3,&stopLoopHistoryDigitalSensors);
-				break;
-			case 5:
-				lcdHome(lcd);
-				lcdPrintf(lcd,"%s ",historyList[4].values);
-				lcdPosition(lcd,0,1);
-				lcdPrintf(lcd,"H05-> %s",historyList[4].time);
-				isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,nextHistory,1);
-				isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,nextHistory,1);
-				close(BUTTON_3,&stopLoopHistoryDigitalSensors);
-				break;
-			case 6:
-				lcdHome(lcd);
-				lcdPrintf(lcd,"%s ",historyList[5].values);
-				lcdPosition(lcd,0,1);
-				lcdPrintf(lcd,"H06-> %s",historyList[5].time);
-				isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,nextHistory,1);
-				isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,nextHistory,1);
-				close(BUTTON_3,&stopLoopHistoryDigitalSensors);
-				break;
-			case 7:
-				lcdHome(lcd);
-				lcdPrintf(lcd,"%s ",historyList[6].values);
-				lcdPosition(lcd,0,1);
-				lcdPrintf(lcd,"H07-> %s",historyList[6].time);
-				isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,nextHistory,1);
-				isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,nextHistory,1);
-				close(BUTTON_3,&stopLoopHistoryDigitalSensors);
-				break;
-			case 8:
-				lcdHome(lcd);
-				lcdPrintf(lcd,"%s ",historyList[7].values);
-				lcdPosition(lcd,0,1);
-				lcdPrintf(lcd,"H08-> %s",historyList[7].time);
-				isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,nextHistory,1);
-				isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,nextHistory,1);
-				close(BUTTON_3,&stopLoopHistoryDigitalSensors);
-				break;
-			case 9:
-				lcdHome(lcd);
-				lcdPrintf(lcd,"%s ",historyList[8].values);
-				lcdPosition(lcd,0,1);
-				lcdPrintf(lcd,"H09-> %s",historyList[8].time);
-				isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,nextHistory,1);
-				isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,nextHistory,1);
-				close(BUTTON_3,&stopLoopHistoryDigitalSensors);
-				break;
-			case 10:
-				lcdHome(lcd);
-				lcdPrintf(lcd,"%s ",historyList[9].values);
-				lcdPosition(lcd,0,1);
-				lcdPrintf(lcd,"H10-> %s",historyList[9].time);
-				isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,nextHistory,1);
-				isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,nextHistory,1);
-				close(BUTTON_3,&stopLoopHistoryDigitalSensors);
-				break;
-			
-			
+		if(nextHistoryDigital == 0){
+			lcdPrintf(lcd,"  SEM HISTORICO ",historyListDigital[0].values);
+			lcdPosition(lcd,0,1);
+			lcdPrintf(lcd,"                ");
+			close(BUTTON_3,&stopLoopHistoryDigitalSensors);
+		}else{
+			switch(currentHistoryDigitalSensorOption){
+				case 1:
+					lcdHome(lcd);
+					lcdPrintf(lcd,"%s ",historyListDigital[0].values);
+					lcdPosition(lcd,0,1);
+					lcdPrintf(lcd,"H01-> %s",historyListDigital[0].time);
+					isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,nextHistoryDigital,1);
+					isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,nextHistoryDigital,1);
+					close(BUTTON_3,&stopLoopHistoryDigitalSensors);
+					break;
+				case 2:
+					lcdHome(lcd);
+					lcdPrintf(lcd,"%s ",historyListDigital[1].values);
+					lcdPosition(lcd,0,1);
+					lcdPrintf(lcd,"H02-> %s",historyListDigital[1].time);
+					isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,nextHistoryDigital,1);
+					isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,nextHistoryDigital,1);
+					close(BUTTON_3,&stopLoopHistoryDigitalSensors);
+					break;
+				case 3:
+					lcdHome(lcd);
+					lcdPrintf(lcd,"%s ",historyListDigital[2].values);
+					lcdPosition(lcd,0,1);
+					lcdPrintf(lcd,"H03-> %s",historyListDigital[2].time);
+					isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,nextHistoryDigital,1);
+					isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,nextHistoryDigital,1);
+					close(BUTTON_3,&stopLoopHistoryDigitalSensors);
+					break;
+				case 4:
+					lcdHome(lcd);
+					lcdPrintf(lcd,"%s ",historyListDigital[3].values);
+					lcdPosition(lcd,0,1);
+					lcdPrintf(lcd,"H04-> %s",historyListDigital[3].time);
+					isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,nextHistoryDigital,1);
+					isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,nextHistoryDigital,1);
+					close(BUTTON_3,&stopLoopHistoryDigitalSensors);
+					break;
+				case 5:
+					lcdHome(lcd);
+					lcdPrintf(lcd,"%s ",historyListDigital[4].values);
+					lcdPosition(lcd,0,1);
+					lcdPrintf(lcd,"H05-> %s",historyListDigital[4].time);
+					isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,nextHistoryDigital,1);
+					isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,nextHistoryDigital,1);
+					close(BUTTON_3,&stopLoopHistoryDigitalSensors);
+					break;
+				case 6:
+					lcdHome(lcd);
+					lcdPrintf(lcd,"%s ",historyListDigital[5].values);
+					lcdPosition(lcd,0,1);
+					lcdPrintf(lcd,"H06-> %s",historyListDigital[5].time);
+					isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,nextHistoryDigital,1);
+					isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,nextHistoryDigital,1);
+					close(BUTTON_3,&stopLoopHistoryDigitalSensors);
+					break;
+				case 7:
+					lcdHome(lcd);
+					lcdPrintf(lcd,"%s ",historyListDigital[6].values);
+					lcdPosition(lcd,0,1);
+					lcdPrintf(lcd,"H07-> %s",historyListDigital[6].time);
+					isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,nextHistoryDigital,1);
+					isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,nextHistoryDigital,1);
+					close(BUTTON_3,&stopLoopHistoryDigitalSensors);
+					break;
+				case 8:
+					lcdHome(lcd);
+					lcdPrintf(lcd,"%s ",historyListDigital[7].values);
+					lcdPosition(lcd,0,1);
+					lcdPrintf(lcd,"H08-> %s",historyListDigital[7].time);
+					isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,nextHistoryDigital,1);
+					isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,nextHistoryDigital,1);
+					close(BUTTON_3,&stopLoopHistoryDigitalSensors);
+					break;
+				case 9:
+					lcdHome(lcd);
+					lcdPrintf(lcd,"%s ",historyListDigital[8].values);
+					lcdPosition(lcd,0,1);
+					lcdPrintf(lcd,"H09-> %s",historyListDigital[8].time);
+					isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,nextHistoryDigital,1);
+					isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,nextHistoryDigital,1);
+					close(BUTTON_3,&stopLoopHistoryDigitalSensors);
+					break;
+				case 10:
+					lcdHome(lcd);
+					lcdPrintf(lcd,"%s ",historyListDigital[9].values);
+					lcdPosition(lcd,0,1);
+					lcdPrintf(lcd,"H10-> %s",historyListDigital[9].time);
+					isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,nextHistoryDigital,1);
+					isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,nextHistoryDigital,1);
+					close(BUTTON_3,&stopLoopHistoryDigitalSensors);
+					break;	
+			}
 		}
+		
 	}
 	stopLoopHistoryDigitalSensors = 0;
 	currentHistoryDigitalSensorOption = 1;
 }
 
 void historyAnalogSensors(){
+	lcdClear(lcd);
 	
+	while(!stopLoopHistoryAnalogSensors){
+		if(nextHistoryAnalog == 0){
+			lcdPrintf(lcd,"  SEM HISTORICO ",historyListAnalog[0].values);
+			lcdPosition(lcd,0,1);
+			lcdPrintf(lcd,"                ");
+			close(BUTTON_3,&stopLoopHistoryAnalogSensors);
+		}else{
+			switch(currentHistoryAnalogSensorOption){
+				case 1:
+					lcdHome(lcd);
+					lcdPrintf(lcd,"%s ",historyListAnalog[0].values);
+					lcdPosition(lcd,0,1);
+					lcdPrintf(lcd,"H01-> %s",historyListAnalog[0].time);
+					isPressed(BUTTON_2,increment,&currentHistoryAnalogSensorOption,nextHistoryAnalog,1);
+					isPressed(BUTTON_1,decrement,&currentHistoryAnalogSensorOption,nextHistoryAnalog,1);
+					close(BUTTON_3,&stopLoopHistoryAnalogSensors);
+					break;
+				case 2:
+					lcdHome(lcd);
+					lcdPrintf(lcd,"%s ",historyListAnalog[1].values);
+					lcdPosition(lcd,0,1);
+					lcdPrintf(lcd,"H02-> %s",historyListAnalog[1].time);
+					isPressed(BUTTON_2,increment,&currentHistoryAnalogSensorOption,nextHistoryAnalog,1);
+					isPressed(BUTTON_1,decrement,&currentHistoryAnalogSensorOption,nextHistoryAnalog,1);
+					close(BUTTON_3,&stopLoopHistoryAnalogSensors);
+					break;
+				case 3:
+					lcdHome(lcd);
+					lcdPrintf(lcd,"%s ",historyListAnalog[2].values);
+					lcdPosition(lcd,0,1);
+					lcdPrintf(lcd,"H03-> %s",historyListAnalog[2].time);
+					isPressed(BUTTON_2,increment,&currentHistoryAnalogSensorOption,nextHistoryAnalog,1);
+					isPressed(BUTTON_1,decrement,&currentHistoryAnalogSensorOption,nextHistoryAnalog,1);
+					close(BUTTON_3,&stopLoopHistoryAnalogSensors);
+					break;
+				case 4:
+					lcdHome(lcd);
+					lcdPrintf(lcd,"%s ",historyListAnalog[3].values);
+					lcdPosition(lcd,0,1);
+					lcdPrintf(lcd,"H04-> %s",historyListAnalog[3].time);
+					isPressed(BUTTON_2,increment,&currentHistoryAnalogSensorOption,nextHistoryAnalog,1);
+					isPressed(BUTTON_1,decrement,&currentHistoryAnalogSensorOption,nextHistoryAnalog,1);
+					close(BUTTON_3,&stopLoopHistoryAnalogSensors);
+					break;
+				case 5:
+					lcdHome(lcd);
+					lcdPrintf(lcd,"%s ",historyListAnalog[4].values);
+					lcdPosition(lcd,0,1);
+					lcdPrintf(lcd,"H05-> %s",historyListAnalog[4].time);
+					isPressed(BUTTON_2,increment,&currentHistoryAnalogSensorOption,nextHistoryAnalog,1);
+					isPressed(BUTTON_1,decrement,&currentHistoryAnalogSensorOption,nextHistoryAnalog,1);
+					close(BUTTON_3,&stopLoopHistoryAnalogSensors);
+					break;
+				case 6:
+					lcdHome(lcd);
+					lcdPrintf(lcd,"%s ",historyListAnalog[5].values);
+					lcdPosition(lcd,0,1);
+					lcdPrintf(lcd,"H06-> %s",historyListAnalog[5].time);
+					isPressed(BUTTON_2,increment,&currentHistoryAnalogSensorOption,nextHistoryAnalog,1);
+					isPressed(BUTTON_1,decrement,&currentHistoryAnalogSensorOption,nextHistoryAnalog,1);
+					close(BUTTON_3,&stopLoopHistoryAnalogSensors);
+					break;
+				case 7:
+					lcdHome(lcd);
+					lcdPrintf(lcd,"%s ",historyListAnalog[6].values);
+					lcdPosition(lcd,0,1);
+					lcdPrintf(lcd,"H07-> %s",historyListAnalog[6].time);
+					isPressed(BUTTON_2,increment,&currentHistoryAnalogSensorOption,nextHistoryAnalog,1);
+					isPressed(BUTTON_1,decrement,&currentHistoryAnalogSensorOption,nextHistoryAnalog,1);
+					close(BUTTON_3,&stopLoopHistoryAnalogSensors);
+					break;
+				case 8:
+					lcdHome(lcd);
+					lcdPrintf(lcd,"%s ",historyListAnalog[7].values);
+					lcdPosition(lcd,0,1);
+					lcdPrintf(lcd,"H08-> %s",historyListAnalog[7].time);
+					isPressed(BUTTON_2,increment,&currentHistoryAnalogSensorOption,nextHistoryAnalog,1);
+					isPressed(BUTTON_1,decrement,&currentHistoryAnalogSensorOption,nextHistoryAnalog,1);
+					close(BUTTON_3,&stopLoopHistoryAnalogSensors);
+					break;
+				case 9:
+					lcdHome(lcd);
+					lcdPrintf(lcd,"%s ",historyListAnalog[8].values);
+					lcdPosition(lcd,0,1);
+					lcdPrintf(lcd,"H09-> %s",historyListAnalog[8].time);
+					isPressed(BUTTON_2,increment,&currentHistoryAnalogSensorOption,nextHistoryAnalog,1);
+					isPressed(BUTTON_1,decrement,&currentHistoryAnalogSensorOption,nextHistoryAnalog,1);
+					close(BUTTON_3,&stopLoopHistoryAnalogSensors);
+					break;
+				case 10:
+					lcdHome(lcd);
+					lcdPrintf(lcd,"%s ",historyListAnalog[9].values);
+					lcdPosition(lcd,0,1);
+					lcdPrintf(lcd,"H10-> %s",historyListAnalog[9].time);
+					isPressed(BUTTON_2,increment,&currentHistoryAnalogSensorOption,nextHistoryAnalog,1);
+					isPressed(BUTTON_1,decrement,&currentHistoryAnalogSensorOption,nextHistoryAnalog,1);
+					close(BUTTON_3,&stopLoopHistoryAnalogSensors);
+					break;	
+			}
+		}
+		
+	}
+	stopLoopHistoryAnalogSensors = 0;
+	currentHistoryAnalogSensorOption = 1;
 }
 
 void historyMenu(){
@@ -840,6 +974,7 @@ void historyMenu(){
 				lcdPuts(lcd,"SENSOR ANALOGICO");
 				isPressed(BUTTON_2,increment,&currentHistoryMenuOption,3,1);
 				isPressed(BUTTON_1,decrement,&currentHistoryMenuOption,3,1);
+				enter(BUTTON_3,historyAnalogSensors);
 				break;
 			case 3:
 				lcdHome(lcd);
