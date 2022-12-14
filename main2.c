@@ -99,7 +99,7 @@ int stopLoopHistoryMenu = 0;
 int stopLoopHistoryDigitalSensors = 0;
 int stopLoopHistoryAnalogSensors = 0;
 
-// Intervalo de Tempo
+// Intervalo de TempohistoryList
 int timeInterval = 1;
 char timeUnit = 's';
 int timeUnitAux = 0;
@@ -175,8 +175,7 @@ void updateHistoryDigital(int next){
 		strcpy(historyListDigital[next].time,timeLastValueDigitalSensors);
 		nextHistoryDigital++;
 	}else{
-		memcpy(historyListDigital, &historyListDigital[1], 9*sizeof(*historyListDigital));
-		sprintf(historyListDigital[9].values,"%c,%c,%c,%c,%c,%c,%c,%c",lastValueDigitalSensors[0],lastValueDigitalSensors[1],lastValueDigitalSensors[2],lastValueDigitalSensors[3],lastValueDigitalSensors[4],lastValueDigitalSensors[5],lastValueDigitalSensors[6],lastValueDigitalSensors[7]);
+		memcpy(historyListDigitahistoryListl[9].values,"%c,%c,%c,%c,%c,%c,%c,%c",lastValueDigitalSensors[0],lastValueDigitalSensors[1],lastValueDigitalSensors[2],lastValueDigitalSensors[3],lastValueDigitalSensors[4],lastValueDigitalSensors[5],lastValueDigitalSensors[6],lastValueDigitalSensors[7]);
 		strcpy(historyListDigital[9].time,timeLastValueDigitalSensors);
 	}
 }
