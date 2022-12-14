@@ -800,7 +800,7 @@ void mainMenu(){
 				lcdHome(lcd);
 				lcdPuts(lcd,"    HISTORICO   ");
 				lcdPosition(lcd,0,1);
-				lcdPrintf(lcd,"    %s    ",timeLastValueDigitalSensors);
+				lcdPrintf(lcd,"                ");
 				isPressed(BUTTON_2,increment,&currentMenuOption,7,1);
 				isPressed(BUTTON_1,decrement,&currentMenuOption,7,1);
 				enter(BUTTON_3,historyMenu);
