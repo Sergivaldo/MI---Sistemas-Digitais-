@@ -684,15 +684,18 @@ void connectionStatusMenu(){
 }
 
 void historyDigitalSensors(){
+	lcdClear(lcd);
 	while(!stopLoopHistoryDigitalSensors){
 		lcdHome(lcd);
 		lcdPrintf(lcd,"%s ",historyList[currentHistoryDigitalSensorOption].values);
 		lcdPosition(lcd,0,1);
 		lcdPrintf(lcd,"%s        ",historyList[currentHistoryDigitalSensorOption].time);
-		isPressed(BUTTON_2,increment,&currentConnectionStatusOption,nextHistory,0);
-		isPressed(BUTTON_1,decrement,&currentConnectionStatusOption,nextHistory,0);
+		isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,nextHistory,0);
+		isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,nextHistory,0);
 		close(BUTTON_3, &stopLoopHistoryDigitalSensors);
 	}
+
+	stopLoopHistoryDigitalSensors = 0;
 }
 
 void historyAnalogSensors(){
@@ -704,9 +707,9 @@ void historyMenu(){
 		switch(currentHistoryMenuOption){
 			case 1:
 				lcdHome(lcd);
-				lcdPuts(lcd,"HISTORICO:");
+				lcdPuts(lcd,"HISTORICO:      ");
 				lcdPosition(lcd,0,1);
-				lcdPuts(lcd,"SENSOR DIGITAL");
+				lcdPuts(lcd,"SENSOR DIGITAL  ");
 				isPressed(BUTTON_2,increment,&currentHistoryMenuOption,3,1);
 				isPressed(BUTTON_1,decrement,&currentHistoryMenuOption,3,1);
 				enter(BUTTON_3,historyDigitalSensors);
