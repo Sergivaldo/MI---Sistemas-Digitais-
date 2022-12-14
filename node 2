@@ -293,7 +293,7 @@ void setTimeInterval(int sec) {
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   setLedState(1);
-  setTimeInterval(1);
+  setTimeInterval(5);
   connectWifi_OTA();
   MQTT.setServer(mqtt_server, 1883);
   MQTT.setCallback(receivePackage);
@@ -308,4 +308,3 @@ void loop() {
   MQTT.loop();
   sendAction.check();
 }
-
