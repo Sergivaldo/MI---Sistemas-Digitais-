@@ -165,7 +165,9 @@ void updateHistory(int next){
 		strcpy(historyList[next].time,timeLastValueDigitalSensors);
 		nextHistory++;
 	}else{
-		
+		memcpy(historyList, &historyList[1], 9*sizeof(*historyList));
+		sprintf(historyList[9].values,"%c,%c,%c,%c,%c,%c,%c,%c",lastValueDigitalSensors[0],lastValueDigitalSensors[1],lastValueDigitalSensors[2],lastValueDigitalSensors[3],lastValueDigitalSensors[4],lastValueDigitalSensors[5],lastValueDigitalSensors[6],lastValueDigitalSensors[7]);
+		strcpy(historyList[9].time,timeLastValueDigitalSensors);
 	}
 }
 
