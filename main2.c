@@ -691,6 +691,7 @@ void historyDigitalSensors(){
 		lcdPrintf(lcd,"%s        ",historyList[currentHistoryDigitalSensorOption].time);
 		isPressed(BUTTON_2,increment,&currentConnectionStatusOption,nextHistory,0);
 		isPressed(BUTTON_1,decrement,&currentConnectionStatusOption,nextHistory,0);
+		close(BUTTON_3, &stopLoopHistoryDigitalSensors);
 	}
 }
 
