@@ -73,6 +73,8 @@ int currentMenuAnalogSensorOption = 1;
 int currentMenuIntervalOption = 1;
 int currentUsedSensorsOption = 1;
 int currentConnectionStatusOption = 1;
+int currentHistoryMenuOption = 1;
+int currentHistoryDigitalSensorOption = nextHistory;
 
 // Flags de parada
 int stopLoopMainMenu = 0;
@@ -83,6 +85,8 @@ int stopLoopSetTimeInterval = 0;
 int stopLoopSetTimeUnit = 0;
 int stopLoopSetUsedSensors = 0;
 int stopLoopConnectionStatusMenu = 0;
+int stopLoopHistoryMenu = 0;
+int stopLoopHistoryDigitalSensors = 0;
 
 // Intervalo de Tempo
 int timeInterval = 1;
@@ -679,37 +683,56 @@ void connectionStatusMenu(){
     lcdClear(lcd);
 }
 
+void historyDigitalSensors(){
+	while(!stopLoopHistoryDigitalSensors){
+		lcdHome(lcd);
+		lcdPrintf(lcd,"%s ",historyList[currentHistoryDigitalSensorOption].values);
+		lcdPosition(lcd,0,1);
+		lcdPuts(lcd,"%s        ",historyList[currentHistoryDigitalSensorOption].time);
+		isPressed(BUTTON_2,increment,&currentConnectionStatusOption,nextHistory,0);
+		isPressed(BUTTON_1,decrement,&currentConnectionStatusOption,nextHistory,0);
+	}
+}
+
+void historyAnalogSensors(){
+	
+}
+
 void historyMenu(){
 	while(!stopLoopHistoryMenu){
 		switch(currentHistoryMenuOption){
-			case 0:
-				lcdHome(lcd);
-				lcdPuts(lcd,"ANALOGICOS");
-				lcdPosition(lcd,0,1);
-				lcdPuts(lcd,"   Problema 3   ");
-				isPressed(BUTTON_2,increment,&currentMenuOption,7,1);
-				isPressed(BUTTON_1,decrement,&currentMenuOption,7,1);
-				break;
 			case 1:
 				lcdHome(lcd);
-				lcdPuts(lcd,"LEITURA:        ");
+				lcdPuts(lcd,"HISTORICO:");
 				lcdPosition(lcd,0,1);
-				lcdPuts(lcd,"SENSOR DIGITAL  ");
-				isPressed(BUTTON_2,increment,&currentMenuOption,7,1);
-				isPressed(BUTTON_1,decrement,&currentMenuOption,7,1);
-				enter(BUTTON_3,digitalSensorsMenu);
+				lcdPuts(lcd,"SENSOR DIGITAL");
+				isPressed(BUTTON_2,increment,&currentHistoryMenuOption,3,1);
+				isPressed(BUTTON_1,decrement,&currentHistoryMenuOption,3,1);
+				enter(BUTTON_3,historyDigitalSensors);
 				break;
 			case 2:
 				lcdHome(lcd);
-				lcdPuts(lcd,"LEITURA:        ");
+				lcdPuts(lcd,"HISTORICO:        ");
 				lcdPosition(lcd,0,1);
-				lcdPuts(lcd,"SENSOR ANALOGICO");
-				isPressed(BUTTON_2,increment,&currentMenuOption,7,1);
-				isPressed(BUTTON_1,decrement,&currentMenuOption,7,1);
-				enter(BUTTON_3,&analogSensorsMenu);
+				lcdPuts(lcd,"SENSOR ANALOGICO  ");
+				isPressed(BUTTON_2,increment,&currentHistoryMenuOption,3,1);
+				isPressed(BUTTON_1,decrement,&currentHistoryMenuOption,3,1);
+				enter(BUTTON_3,digitalSensorsMenu);
+				break;
+			case 3:
+				lcdHome(lcd);
+				lcdPuts(lcd,"      SAIR      ");
+				lcdPosition(lcd,0,1);
+				lcdPuts(lcd,"                ");
+				isPressed(BUTTON_2,increment,&currentHistoryMenuOption,3,1);
+				isPressed(BUTTON_1,decrement,&currentHistoryMenuOption,3,1);
+				close(BUTTON_3,&stopLoopHistoryMenu);
 				break;
 		}
 	}
+	stopLoopHistoryMenu = 0;
+	currentHistoryMenuOption = 1;
+	lcdClear(lcd);
 }
 
 void mainMenu(){
