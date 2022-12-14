@@ -96,7 +96,7 @@ int connectionApp = -1;
 int testConnection = 0;
 
 typedef struct{
-	char values[8];
+	char values[16];
 	char time[10];
 }History;
 
@@ -127,7 +127,7 @@ pthread_t time_now;
 void updateHistory(int nextHistory){
 	int lenList = sizeof(historyList)/sizeof(historyList[0]);
 	if(nextHistory < lenList - 1){
-		sprintf(historyList[nextHistory],"%c,%c,%c,%c,%c,%c,%c,%c",)
+		sprintf(historyList[nextHistory].values,"%c,%c,%c,%c,%c,%c,%c,%c",lastValueDigitalSensors[0],lastValueDigitalSensors[1],lastValueDigitalSensors[2],lastValueDigitalSensors[3],lastValueDigitalSensors[4],lastValueDigitalSensors[5],lastValueDigitalSensors[6],lastValueDigitalSensors[7]);
 		strcpy(historyList[nextHistory].time,timeLastValueDigitalSensors);
 		nextHistory++;
 	}
@@ -679,6 +679,39 @@ void connectionStatusMenu(){
     lcdClear(lcd);
 }
 
+void historyMenu(){
+	while(!stopLoopHistoryMenu){
+		switch(currentHistoryMenuOption){
+			case 0:
+				lcdHome(lcd);
+				lcdPuts(lcd,"ANALOGICOS");
+				lcdPosition(lcd,0,1);
+				lcdPuts(lcd,"   Problema 3   ");
+				isPressed(BUTTON_2,increment,&currentMenuOption,7,1);
+				isPressed(BUTTON_1,decrement,&currentMenuOption,7,1);
+				break;
+			case 1:
+				lcdHome(lcd);
+				lcdPuts(lcd,"LEITURA:        ");
+				lcdPosition(lcd,0,1);
+				lcdPuts(lcd,"SENSOR DIGITAL  ");
+				isPressed(BUTTON_2,increment,&currentMenuOption,7,1);
+				isPressed(BUTTON_1,decrement,&currentMenuOption,7,1);
+				enter(BUTTON_3,digitalSensorsMenu);
+				break;
+			case 2:
+				lcdHome(lcd);
+				lcdPuts(lcd,"LEITURA:        ");
+				lcdPosition(lcd,0,1);
+				lcdPuts(lcd,"SENSOR ANALOGICO");
+				isPressed(BUTTON_2,increment,&currentMenuOption,7,1);
+				isPressed(BUTTON_1,decrement,&currentMenuOption,7,1);
+				enter(BUTTON_3,&analogSensorsMenu);
+				break;
+		}
+	}
+}
+
 void mainMenu(){
 	while(!stopLoopMainMenu){
 		switch(currentMenuOption){
@@ -768,7 +801,7 @@ void *checkConnections(void *arg){
 	while (1){
 		testConnection = 1;
 		send(REQUEST, GET_NODE_CONNECTION_STATUS);
-		delay(5000);
+		delay(500);
 		if(testConnection == 1){
 			connectionNode = -1;
 		}else{
@@ -796,7 +829,7 @@ void *getTime(void *arg){
 	      char buf_min[3];
 	      char buf_sec[3];
 	      
-	      timeNow -> tm_hour-3 <=9 ? sprintf(buf_hour,"0%d",(timeNow -> tm_hour-3)):sprintf(buf_hour,"%d",(timeNow -> tm_hour-3));
+	      timeNow -> tm_hour <=9 ? sprintf(buf_hour,"0%d",(timeNow -> tm_hour)):sprintf(buf_hour,"%d",(timeNow -> tm_hour));
 	    
 	      timeNow -> tm_min <=9 ? sprintf(buf_min,"0%d",(timeNow -> tm_min)):sprintf(buf_min,"%d",(timeNow -> tm_min));
 	    
