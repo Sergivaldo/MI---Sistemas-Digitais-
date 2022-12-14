@@ -75,7 +75,7 @@ const char *mqtt_password = "@luno*123";
 byte ledState = HIGH;
 String address = "D0";
 char activeSensors[] = {'1', '1', '0', '0', '0', '0', '0', '0'};
-unsigned int sendInterval = INIT_SEND_INTERVAl;
+unsigned int sendInterval;
 
 WiFiClient espClient;
 PubSubClient MQTT(espClient);
@@ -92,7 +92,7 @@ void connectWifi_OTA() {
     ESP.restart();
   }
 
-  ArduinoOTA.setHostname("ESP-10.0.0.108");
+  ArduinoOTA.setHostname("ESP-10.0.0.107");
 
   ArduinoOTA.onStart([]() {
     String type;
