@@ -76,7 +76,7 @@ int currentMenuIntervalOption = 1;
 int currentUsedSensorsOption = 1;
 int currentConnectionStatusOption = 1;
 int currentHistoryMenuOption = 1;
-int currentHistoryDigitalSensorOption = nextHistory;
+int currentHistoryDigitalSensorOption = 0;
 
 // Flags de parada
 int stopLoopMainMenu = 0;
@@ -688,7 +688,7 @@ void historyDigitalSensors(){
 		lcdHome(lcd);
 		lcdPrintf(lcd,"%s ",historyList[currentHistoryDigitalSensorOption].values);
 		lcdPosition(lcd,0,1);
-		lcdPuts(lcd,"%s        ",historyList[currentHistoryDigitalSensorOption].time);
+		lcdPrintf(lcd,"%s        ",historyList[currentHistoryDigitalSensorOption].time);
 		isPressed(BUTTON_2,increment,&currentConnectionStatusOption,nextHistory,0);
 		isPressed(BUTTON_1,decrement,&currentConnectionStatusOption,nextHistory,0);
 	}
