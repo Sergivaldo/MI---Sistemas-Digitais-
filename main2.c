@@ -810,6 +810,7 @@ void historyDigitalSensors(){
 				close(BUTTON_3,&stopLoopHistoryDigitalSensors);
 				break;
 			
+			
 		}
 	}
 	stopLoopHistoryDigitalSensors = 0;
