@@ -149,7 +149,7 @@ void setDigitalValueSensors(){
       substr = strtok(NULL, ",");
    }
    strcpy(timeLastValueDigitalSensors, currentTime);
-
+   updateHistory(nextHistory);
 }
 
 
