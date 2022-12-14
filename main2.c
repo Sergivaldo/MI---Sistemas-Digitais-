@@ -803,7 +803,7 @@ void mainMenu(){
 				lcdPrintf(lcd,"    %s    ",timeLastValueDigitalSensors);
 				isPressed(BUTTON_2,increment,&currentMenuOption,7,1);
 				isPressed(BUTTON_1,decrement,&currentMenuOption,7,1);
-				enter(BUTTON_3,connectionStatusMenu);
+				enter(BUTTON_3,historyMenu);
 				break;
 			case 7:
 				lcdHome(lcd);
