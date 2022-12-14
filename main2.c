@@ -131,8 +131,7 @@ pthread_t stats_connection;
 pthread_t time_now;
 
 void updateHistory(int nextHistory){
-	int lenList = sizeof(historyList)/sizeof(historyList[0]);
-	if(nextHistory < lenList - 1){
+	if(nextHistory < 9){
 		sprintf(historyList[nextHistory].values,"%c,%c,%c,%c,%c,%c,%c,%c",lastValueDigitalSensors[0],lastValueDigitalSensors[1],lastValueDigitalSensors[2],lastValueDigitalSensors[3],lastValueDigitalSensors[4],lastValueDigitalSensors[5],lastValueDigitalSensors[6],lastValueDigitalSensors[7]);
 		strcpy(historyList[nextHistory].time,timeLastValueDigitalSensors);
 		nextHistory++;
@@ -716,12 +715,11 @@ void historyMenu(){
 				break;
 			case 2:
 				lcdHome(lcd);
-				lcdPuts(lcd,"HISTORICO:        ");
+				lcdPuts(lcd,"HISTORICO:      ");
 				lcdPosition(lcd,0,1);
-				lcdPuts(lcd,"SENSOR ANALOGICO  ");
+				lcdPuts(lcd,"SENSOR ANALOGICO");
 				isPressed(BUTTON_2,increment,&currentHistoryMenuOption,3,1);
 				isPressed(BUTTON_1,decrement,&currentHistoryMenuOption,3,1);
-				enter(BUTTON_3,digitalSensorsMenu);
 				break;
 			case 3:
 				lcdHome(lcd);
