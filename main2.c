@@ -386,8 +386,6 @@ void valueDigitalSensor(int index){
 	}
 }
 
-
-
 void setUsedSensors(){
 	while(!stopLoopSetUsedSensors){
 		switch(currentUsedSensorsOption){
@@ -800,7 +798,7 @@ void mainMenu(){
 				break;
 			case 6:
 				lcdHome(lcd);
-				lcdPuts(lcd,"     HORARIO     ");
+				lcdPuts(lcd,"    HISTORICO   ");
 				lcdPosition(lcd,0,1);
 				lcdPrintf(lcd,"    %s    ",timeLastValueDigitalSensors);
 				isPressed(BUTTON_2,increment,&currentMenuOption,7,1);
