@@ -17,13 +17,14 @@
 #define QOS2         2
 #define TIMEOUT     5000L
 
-// Comandos de requisição
+// Comandos de requisição da
 #define GET_ANALOG_INPUT_VALUE "0x04"
 #define GET_DIGITAL_INPUT_VALUE "0x05"
 #define SET_ON_NODEMCU_LED "0x06"
 #define SET_OFF_NODEMCU_LED "0x07"
 #define GET_NODE_CONNECTION_STATUS "0x08"
 #define GET_LED_VALUE "0x09"
+
 
 //Comandos de resposta
 #define NODE_SITUATION "0x200"
@@ -40,7 +41,13 @@
 #define TIME_INTERVAL "tp04/g03/node/time-interval"          //Enviar o intervalo de atualização dos sensores
 
 // Definções dos topicos de comunicação com o APP
-#define APP_CONNECTION_STATUS "tp04/g03/app/status"          //Receber o status de conexão com o APP
+#define APP_CONNECTION_STATUS "tp04/g03/app/status"          
+#define APP_REQUEST"tp04/g03/mqtt/request/app/value"            
+#define APP_RESPONSE "tp04/g03/mqtt/response/app/value"             
+#define APP_TIME_INTERVAL "tp04/g03/app/time-interval"
+#define APP_ACTIVE_SENSORS "tp04/g03/app/active-sensors"
+#define APP_ANALOG_SENSOR "tp04/g03/node/analog-sensor/value"    
+#define APP_DIGITAL_SENSOR "tp04/g03/node/digital-sensor/value"
 
 // Definições dos endereços dos sensores digitais
 
