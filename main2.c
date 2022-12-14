@@ -130,11 +130,42 @@ MQTTClient client;
 pthread_t stats_connection;
 pthread_t time_now;
 
-void updateHistory(int nextHistory){
-	if(nextHistory < 9){
-		sprintf(historyList[nextHistory].values,"%c,%c,%c,%c,%c,%c,%c,%c",lastValueDigitalSensors[0],lastValueDigitalSensors[1],lastValueDigitalSensors[2],lastValueDigitalSensors[3],lastValueDigitalSensors[4],lastValueDigitalSensors[5],lastValueDigitalSensors[6],lastValueDigitalSensors[7]);
-		strcpy(historyList[nextHistory].time,timeLastValueDigitalSensors);
+
+void getTime(){
+	//ponteiro para struct que armazena data e hora  
+	struct tm *timeNow;     
+	
+	//variável do tipo time_t para armazenar o tempo em segundos  
+	time_t seconds;
+	 
+	//obtendo o tempo em segundos  
+	time(&seconds);   
+
+	//para converter de segundos para o tempo local  
+	//utilizamos a função localtime  
+	timeNow = localtime(&seconds);  
+	
+	char buf_hour[3];
+	char buf_min[3];
+	char buf_sec[3];
+	
+	timeNow -> tm_hour <=9 ? sprintf(buf_hour,"0%d",(timeNow -> tm_hour)):sprintf(buf_hour,"%d",(timeNow -> tm_hour));
+
+	timeNow -> tm_min <=9 ? sprintf(buf_min,"0%d",(timeNow -> tm_min)):sprintf(buf_min,"%d",(timeNow -> tm_min));
+
+	timeNow -> tm_sec <=9 ? sprintf(buf_sec,"0%d",(timeNow -> tm_sec)):sprintf(buf_sec,"%d",(timeNow -> tm_sec));
+	
+	sprintf(timeLastValueDigitalSensors,"%s:%s:%s",buf_hour,buf_min,buf_sec);
+      
+}
+
+void updateHistory(int next){
+	if(next < 10){
+		sprintf(historyList[next].values,"%c,%c,%c,%c,%c,%c,%c,%c",lastValueDigitalSensors[0],lastValueDigitalSensors[1],lastValueDigitalSensors[2],lastValueDigitalSensors[3],lastValueDigitalSensors[4],lastValueDigitalSensors[5],lastValueDigitalSensors[6],lastValueDigitalSensors[7]);
+		strcpy(historyList[next].time,timeLastValueDigitalSensors);
 		nextHistory++;
+	}else{
+		
 	}
 }
 
@@ -153,7 +184,7 @@ void setDigitalValueSensors(){
 
       substr = strtok(NULL, ",");
    }
-   strcpy(timeLastValueDigitalSensors, currentTime);
+   getTime();
    updateHistory(nextHistory);
 }
 
@@ -690,91 +721,93 @@ void historyDigitalSensors(){
 				lcdHome(lcd);
 				lcdPrintf(lcd,"%s ",historyList[0].values);
 				lcdPosition(lcd,0,1);
-				lcdPrintf(lcd,"%s        ",historyList[0].time);
-				isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,11,1);
-				isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,11,1);
+				lcdPrintf(lcd,"H01-> %s",historyList[0].time);
+				isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,nextHistory,1);
+				isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,nextHistory,1);
+				close(BUTTON_3,&stopLoopHistoryDigitalSensors);
 				break;
 			case 2:
 				lcdHome(lcd);
 				lcdPrintf(lcd,"%s ",historyList[1].values);
 				lcdPosition(lcd,0,1);
-				lcdPrintf(lcd,"%s        ",historyList[1].time);
-				isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,11,1);
-				isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,11,1);
+				lcdPrintf(lcd,"H02-> %s",historyList[1].time);
+				isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,nextHistory,1);
+				isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,nextHistory,1);
+				close(BUTTON_3,&stopLoopHistoryDigitalSensors);
 				break;
 			case 3:
 			    lcdHome(lcd);
 				lcdPrintf(lcd,"%s ",historyList[2].values);
 				lcdPosition(lcd,0,1);
-				lcdPrintf(lcd,"%s        ",historyList[2].time);
-				isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,11,1);
-				isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,11,1);
+				lcdPrintf(lcd,"H03-> %s",historyList[2].time);
+				isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,nextHistory,1);
+				isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,nextHistory,1);
+				close(BUTTON_3,&stopLoopHistoryDigitalSensors);
 				break;
 			case 4:
 				lcdHome(lcd);
 				lcdPrintf(lcd,"%s ",historyList[3].values);
 				lcdPosition(lcd,0,1);
-				lcdPrintf(lcd,"%s        ",historyList[3].time);
-				isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,11,1);
-				isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,11,1);
+				lcdPrintf(lcd,"H04-> %s",historyList[3].time);
+				isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,nextHistory,1);
+				isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,nextHistory,1);
+				close(BUTTON_3,&stopLoopHistoryDigitalSensors);
 				break;
 			case 5:
 				lcdHome(lcd);
 				lcdPrintf(lcd,"%s ",historyList[4].values);
 				lcdPosition(lcd,0,1);
-				lcdPrintf(lcd,"%s        ",historyList[4].time);
-				isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,11,1);
-				isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,11,1);
+				lcdPrintf(lcd,"H05-> %s",historyList[4].time);
+				isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,nextHistory,1);
+				isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,nextHistory,1);
+				close(BUTTON_3,&stopLoopHistoryDigitalSensors);
 				break;
 			case 6:
 				lcdHome(lcd);
 				lcdPrintf(lcd,"%s ",historyList[5].values);
 				lcdPosition(lcd,0,1);
-				lcdPrintf(lcd,"%s        ",historyList[5].time);
-				isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,11,1);
-				isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,11,1);
+				lcdPrintf(lcd,"H06-> %s",historyList[5].time);
+				isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,nextHistory,1);
+				isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,nextHistory,1);
+				close(BUTTON_3,&stopLoopHistoryDigitalSensors);
 				break;
 			case 7:
 				lcdHome(lcd);
 				lcdPrintf(lcd,"%s ",historyList[6].values);
 				lcdPosition(lcd,0,1);
-				lcdPrintf(lcd,"%s        ",historyList[6].time);
-				isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,11,1);
-				isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,11,1);
+				lcdPrintf(lcd,"H07-> %s",historyList[6].time);
+				isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,nextHistory,1);
+				isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,nextHistory,1);
+				close(BUTTON_3,&stopLoopHistoryDigitalSensors);
 				break;
 			case 8:
 				lcdHome(lcd);
 				lcdPrintf(lcd,"%s ",historyList[7].values);
 				lcdPosition(lcd,0,1);
-				lcdPrintf(lcd,"%s        ",historyList[7].time);
-				isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,11,1);
-				isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,11,1);
+				lcdPrintf(lcd,"H08-> %s",historyList[7].time);
+				isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,nextHistory,1);
+				isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,nextHistory,1);
+				close(BUTTON_3,&stopLoopHistoryDigitalSensors);
 				break;
 			case 9:
 				lcdHome(lcd);
 				lcdPrintf(lcd,"%s ",historyList[8].values);
 				lcdPosition(lcd,0,1);
-				lcdPrintf(lcd,"%s        ",historyList[8].time);
-				isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,11,1);
-				isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,11,1);
+				lcdPrintf(lcd,"H09-> %s",historyList[8].time);
+				isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,nextHistory,1);
+				isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,nextHistory,1);
+				close(BUTTON_3,&stopLoopHistoryDigitalSensors);
 				break;
 			case 10:
 				lcdHome(lcd);
 				lcdPrintf(lcd,"%s ",historyList[9].values);
 				lcdPosition(lcd,0,1);
-				lcdPrintf(lcd,"%s        ",historyList[9].time);
-				isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,11,1);
-				isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,11,1);
-				break;
-			case 11:
-				lcdHome(lcd);
-				lcdPuts(lcd,"      SAIR      ");
-				lcdPosition(lcd,0,1);
-				lcdPuts(lcd,"                ");
-				isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,11,1);
-				isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,11,1);
+				lcdPrintf(lcd,"H10-> %s",historyList[9].time);
+				isPressed(BUTTON_2,increment,&currentHistoryDigitalSensorOption,nextHistory,1);
+				isPressed(BUTTON_1,decrement,&currentHistoryDigitalSensorOption,nextHistory,1);
 				close(BUTTON_3,&stopLoopHistoryDigitalSensors);
 				break;
+			
 		}
 	}
 	stopLoopHistoryDigitalSensors = 0;
@@ -920,34 +953,6 @@ void *checkConnections(void *arg){
 	}
 }
 
-void *getTime(void *arg){
-	 //ponteiro para struct que armazena data e hora  
-	  struct tm *timeNow;     
-	  
-	  //variável do tipo time_t para armazenar o tempo em segundos  
-	  time_t seconds;
-	  while(1){
-	      //obtendo o tempo em segundos  
-	      time(&seconds);   
-	  
-	      //para converter de segundos para o tempo local  
-	      //utilizamos a função localtime  
-	      timeNow = localtime(&seconds);  
-	      
-	      char buf_hour[3];
-	      char buf_min[3];
-	      char buf_sec[3];
-	      
-	      timeNow -> tm_hour <=9 ? sprintf(buf_hour,"0%d",(timeNow -> tm_hour)):sprintf(buf_hour,"%d",(timeNow -> tm_hour));
-	    
-	      timeNow -> tm_min <=9 ? sprintf(buf_min,"0%d",(timeNow -> tm_min)):sprintf(buf_min,"%d",(timeNow -> tm_min));
-	    
-	      timeNow -> tm_sec <=9 ? sprintf(buf_sec,"0%d",(timeNow -> tm_sec)):sprintf(buf_sec,"%d",(timeNow -> tm_sec));
-	      
-	      sprintf(currentTime,"%s:%s:%s",buf_hour,buf_min,buf_sec);
-      
-  }
-}
 
 int main(int argc, char* argv[])
 {
@@ -981,7 +986,6 @@ int main(int argc, char* argv[])
     MQTTClient_subscribe(client, DIGITAL_SENSOR, QOS2);
     send(REQUEST,GET_NODE_CONNECTION_STATUS);
     pthread_create(&stats_connection, NULL, checkConnections, NULL);
-    pthread_create(&time_now, NULL, getTime, NULL);
     
     mainMenu();
     finish();
