@@ -55,9 +55,7 @@
 #define ADDR_D6 "D6"
 #define ADDR_D7 "D7"
 
-#define INIT_SEND_INTERVAl 1000
-
-void setTimeInterval(int sec);
+void setTimeInterval(unsigned int sec);
 char getDigitalValue(String addr);
 void sendDigitalValues();
 void sendAnalogValue();
@@ -285,7 +283,7 @@ void sendAll() {
 
 TimedAction sendAction = TimedAction(sendInterval, sendAll);
 
-void setTimeInterval(int sec) {
+void setTimeInterval(unsigned int sec) {
   sendInterval = sec * 1000;
   sendAction.setInterval(sendInterval);
   MQTT.publish(RESPONSE, "0xFA");
@@ -293,7 +291,7 @@ void setTimeInterval(int sec) {
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   setLedState(1);
-  setTimeInterval(5);
+  setTimeInterval(3);
   connectWifi_OTA();
   MQTT.setServer(mqtt_server, 1883);
   MQTT.setCallback(receivePackage);
