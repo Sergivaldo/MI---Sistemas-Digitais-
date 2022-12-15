@@ -47,13 +47,13 @@
 #define RASP_RESPONSE "tp04/g03/mqtt/response/rasp/value"
 #define RASP_REQUEST "tp04/g03/mqtt/request/rasp/value"
 
-#define APP_CONNECTION_STATUS "tp04/g03/app/status"          
-#define APP_REQUEST "tp04/g03/mqtt/request/app/value"            
-#define APP_RESPONSE "tp04/g03/mqtt/response/app/value"             
-#define APP_TIME_INTERVAL "tp04/g03/app/time-interval"
-#define APP_ACTIVE_SENSORS "tp04/g03/app/active-sensors"
-#define APP_ANALOG_SENSOR "tp04/g03/app/analog-sensor/value"    
-#define APP_DIGITAL_SENSOR "tp04/g03/app/digital-sensor/value"
+#define APP_CONNECTION_STATUS "tp04/g03/app/status"          //Recebe o resposta da conexão       
+#define APP_REQUEST "tp04/g03/mqtt/request/app/value"        //Recebe uma requisição do app    
+#define APP_RESPONSE "tp04/g03/mqtt/response/app/value"      //
+#define APP_TIME_INTERVAL "tp04/g03/app/time-interval"       //Recebe o valor para o intervalo definido no App
+#define APP_ACTIVE_SENSORS "tp04/g03/app/active-sensors"     //Recebe a configuração dos sensores digitais definida no App
+#define APP_ANALOG_SENSOR "tp04/g03/node/analog-sensor/value"//Envia o histórico do sensor analógico   
+#define APP_DIGITAL_SENSOR "tp04/g03/node/digital-sensor/value"//Envia o histórico dos sesores digitais
 
 // Definições dos endereços dos sensores digitais
 #define ADDR_D0 "D0"
@@ -219,12 +219,15 @@ void setDigitalValueSensors(){
    updateHistoryDigital(nextHistoryDigital);
 }
 
+<<<<<<< HEAD
+=======
 void setAnalogValueSensors(){
 	strcpy(lastAnalogValue,bufAnalogValue);
 	getTime(timeLastValueAnalogSensors);
 	updateHistoryAnalog(nextHistoryAnalog);
 }
 
+>>>>>>> aec33ab715dc944eaa428c07dbfe93071d51c773
 void send(char* topic, char* payload) {
     MQTTClient_message pubmsg = MQTTClient_message_initializer;
     pubmsg.payload = payload;
@@ -236,8 +239,7 @@ void send(char* topic, char* payload) {
     MQTTClient_waitForCompletion(client, token, TIMEOUT);
 }
 
-int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *message)
-{
+int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *message){
     char* msg = message -> payload;
 	if(strcmp(topicName,RESPONSE) == 0){
     		if(strcmp(msg,"0x03") == 0){
@@ -269,14 +271,10 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
     return 1;
 }
 
-void connlost(void *context, char *cause)
-{
+void connlost(void *context, char *cause){
     printf("\nConexão perdida\n");
     printf("     cause: %s\n", cause);
 }
-
-
-// Funções do menu lcd
 
 // Debounce
 void isPressed(int btt, int (*function)(int, int, int), int* controller, int max,int min){
