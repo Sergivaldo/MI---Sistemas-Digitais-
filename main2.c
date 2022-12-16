@@ -26,8 +26,6 @@
 #define GET_LED_VALUE "0x09"
 #define GET_APP_CONNECTION_STATUS "0x0A"
 
-
-
 //Comandos de resposta
 #define NODE_SITUATION "0x200"
 #define APP_SITUATION "0x201"
@@ -47,13 +45,14 @@
 #define RASP_RESPONSE "tp04/g03/mqtt/response/rasp/value"
 #define RASP_REQUEST "tp04/g03/mqtt/request/rasp/value"
 
-#define APP_CONNECTION_STATUS "tp04/g03/app/status"          //Recebe o resposta da conexão       
-#define APP_REQUEST "tp04/g03/mqtt/request/app/value"        //Recebe uma requisição do app    
-#define APP_RESPONSE "tp04/g03/mqtt/response/app/value"      //
-#define APP_TIME_INTERVAL "tp04/g03/app/time-interval"       //Recebe o valor para o intervalo definido no App
-#define APP_ACTIVE_SENSORS "tp04/g03/app/active-sensors"     //Recebe a configuração dos sensores digitais definida no App
-#define APP_ANALOG_SENSOR "tp04/g03/node/analog-sensor/value"//Envia o histórico do sensor analógico   
-#define APP_DIGITAL_SENSOR "tp04/g03/node/digital-sensor/value"//Envia o histórico dos sesores digitais
+#define APP_CONNECTION_STATUS "tp04/g03/app/status"          
+#define APP_REQUEST "tp04/g03/mqtt/request/app/value"            
+#define APP_RESPONSE "tp04/g03/mqtt/response/app/value"             
+#define APP_TIME_INTERVAL "tp04/g03/app/time-interval"
+#define APP_ACTIVE_SENSORS "tp04/g03/app/active-sensors"
+#define APP_ANALOG_SENSOR "tp04/g03/app/analog-sensor/value"    
+#define APP_DIGITAL_SENSOR "tp04/g03/app/digital-sensor/value"
+#define APP_HISTORY "tp04/g03/app/history"
 
 // Definições dos endereços dos sensores digitais
 #define ADDR_D0 "D0"
@@ -104,7 +103,7 @@ int stopLoopHistoryMenu = 0;
 int stopLoopHistoryDigitalSensors = 0;
 int stopLoopHistoryAnalogSensors = 0;
 
-// Intervalo de TempohistoryList
+// Intervalo de Tempo
 int timeInterval = 1;
 char timeUnit = 's';
 int timeUnitAux = 0;
@@ -113,8 +112,14 @@ long int timeSeconds = 0;
 // Flags de conexão
 int connectionNode = -1;
 int connectionApp = -1;
+
+// Flags de teste
 int testConnectionNode = 0;
 int testConnectionApp = 0;
+
+// Flags de solicitação
+int appSolicitationCounter = 0;
+char appSolicitation = '';
 
 typedef struct{
 	char values[16];
@@ -137,6 +142,7 @@ History historyListDigital[10];
 History historyListAnalog[10];
 int nextHistoryDigital = 0;
 int nextHistoryAnalog = 0;
+int newInfo = 0;
 // Funções do Cliente MQTT
 
 volatile MQTTClient_deliveryToken deliveredtoken;
@@ -219,15 +225,12 @@ void setDigitalValueSensors(){
    updateHistoryDigital(nextHistoryDigital);
 }
 
-<<<<<<< HEAD
-=======
 void setAnalogValueSensors(){
 	strcpy(lastAnalogValue,bufAnalogValue);
 	getTime(timeLastValueAnalogSensors);
 	updateHistoryAnalog(nextHistoryAnalog);
 }
 
->>>>>>> aec33ab715dc944eaa428c07dbfe93071d51c773
 void send(char* topic, char* payload) {
     MQTTClient_message pubmsg = MQTTClient_message_initializer;
     pubmsg.payload = payload;
@@ -239,7 +242,8 @@ void send(char* topic, char* payload) {
     MQTTClient_waitForCompletion(client, token, TIMEOUT);
 }
 
-int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *message){
+int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *message)
+{
     char* msg = message -> payload;
 	if(strcmp(topicName,RESPONSE) == 0){
     		if(strcmp(msg,"0x03") == 0){
@@ -257,12 +261,25 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
     }else if(strcmp(topicName,DIGITAL_SENSOR) == 0){
     	bufDigitalValues = msg;
     	setDigitalValueSensors();
+		newInfo = 1;
     }else if(strcmp(topicName,ANALOG_SENSOR) == 0){
 		bufAnalogValue = msg;
     	setAnalogValueSensors();
+		newInfo = 1;
     }else if(strcmp(topicName,APP_RESPONSE) == 0){
 		if(strcmp(msg,"0x201") == 0){
 			testConnectionApp = 0;
+		}
+	}else if(strcmp(topicName,APP_REQUEST) == 0){
+		if(strcmp(msg,"0x06") == 0){
+			appSolicitationCounter++;
+			appSolicitation = 0x06;
+		}else if(msg,"0x07"){
+			appSolicitationCounter++;
+			appSolicitation = 0x07;
+		}else if(msg,"0x08"){
+			appSolicitationCounter++;
+			appSolicitation = 0x08;
 		}
 	}
 	
@@ -271,10 +288,14 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
     return 1;
 }
 
-void connlost(void *context, char *cause){
+void connlost(void *context, char *cause)
+{
     printf("\nConexão perdida\n");
     printf("     cause: %s\n", cause);
 }
+
+
+// Funções do menu lcd
 
 // Debounce
 void isPressed(int btt, int (*function)(int, int, int), int* controller, int max,int min){
@@ -363,6 +384,16 @@ void finish(){
 	pthread_join(time_now,NULL);
 }
 
+void convertTimeInterval(){
+	if(timeUnit == 'h'){
+		timeSeconds = timeInterval * 3600;
+	} else if(timeUnit == 'm'){
+		timeSeconds = timeInterval * 60;
+	}else{
+		timeSeconds = timeInterval; 
+	}
+}
+
 // Ajustar o intervalo de tempo em que os sensores serão atualizados
 void setTimeInterval(){
 	lcdClear(lcd);
@@ -383,13 +414,7 @@ void setTimeInterval(){
 		isPressed(BUTTON_1,decrement,&timeInterval,10,1);
 		close(BUTTON_3,&stopLoopSetTimeInterval);
 	}
-	if(timeUnit == 'h'){
-		timeSeconds = timeInterval * 3600;
-	} else if(timeUnit == 'm'){
-		timeSeconds = timeInterval * 60;
-	}else{
-		timeSeconds = timeInterval; 
-	}
+	convertTimeInterval();
 	stopLoopSetTimeInterval = 0;
 	lcdClear(lcd);
 }
@@ -1091,15 +1116,101 @@ void mainMenu(){
 	}
 }
 
-void *checkConnections(void *arg){
 
+
+void *sendInfo(void *arg){
+	if(newInfo == 1){
+		char bufDigital[16];
+		sprintf(bufDigital,"%c,%c,%c,%c,%c,%c,%c,%c",lastValueDigitalSensors[0],lastValueDigitalSensors[1],lastValueDigitalSensors[2],lastValueDigitalSensors[3],lastValueDigitalSensors[4],lastValueDigitalSensors[5],lastValueDigitalSensors[6],lastValueDigitalSensors[7]);
+
+		char bufAnalog[5];
+		sprintf(bufAnalogValue,"%s",lastAnalogValue);
+
+		char bufHistory[255];
+		sprintf(bufHistory,"%c,%c,%c,%c,%c,%c,%c,%c,%s-
+		%c,%c,%c,%c,%c,%c,%c,%c,%s-
+		%c,%c,%c,%c,%c,%c,%c,%c,%s-
+		%c,%c,%c,%c,%c,%c,%c,%c,%s-
+		%c,%c,%c,%c,%c,%c,%c,%c,%s-
+		%c,%c,%c,%c,%c,%c,%c,%c,%s-
+		%c,%c,%c,%c,%c,%c,%c,%c,%s-
+		%c,%c,%c,%c,%c,%c,%c,%c,%s-
+		%c,%c,%c,%c,%c,%c,%c,%c,%s-
+		%c,%c,%c,%c,%c,%c,%c,%c,%s-",
+		historyListDigital[0].values[0],historyListDigital[0].values[1],
+		historyListDigital[0].values[2],historyListDigital[0].values[3],
+		historyListDigital[0].values[4],historyListDigital[0].values[5],
+		historyListDigital[0].values[6],historyListDigital[0].values[7],historyListDigital[0].time,
+		historyListDigital[1].values[0],historyListDigital[1].values[1],
+		historyListDigital[1].values[2],historyListDigital[1].values[3],
+		historyListDigital[1].values[4],historyListDigital[1].values[5],
+		historyListDigital[10].values[6],historyListDigital[1].values[7],historyListDigital[1].time,
+		historyListDigital[2].values[0],historyListDigital[2].values[1],
+		historyListDigital[2].values[2],historyListDigital[2].values[3],
+		historyListDigital[2].values[4],historyListDigital[2].values[5],
+		historyListDigital[2].values[6],historyListDigital[2].values[7],historyListDigital[2].time,
+		historyListDigital[3].values[0],historyListDigital[3].values[1],
+		historyListDigital[3].values[2],historyListDigital[3].values[3],
+		historyListDigital[3].values[4],historyListDigital[3].values[5],
+		historyListDigital[3].values[6],historyListDigital[3].values[7],historyListDigital[3].time,
+		historyListDigital[4].values[0],historyListDigital[4].values[1],
+		historyListDigital[4].values[2],historyListDigital[4].values[3],
+		historyListDigital[4].values[4],historyListDigital[4].values[5],
+		historyListDigital[4].values[6],historyListDigital[4].values[7],historyListDigital[4].time,
+		historyListDigital[5].values[0],historyListDigital[5].values[1],
+		historyListDigital[5].values[2],historyListDigital[5].values[3],
+		historyListDigital[5].values[4],historyListDigital[5].values[5],
+		historyListDigital[5].values[6],historyListDigital[5].values[7],historyListDigital[5].time,
+		historyListDigital[6].values[0],historyListDigital[6].values[1],
+		historyListDigital[6].values[2],historyListDigital[6].values[3],
+		historyListDigital[6].values[4],historyListDigital[6].values[5],
+		historyListDigital[6].values[6],historyListDigital[6].values[7],historyListDigital[6].time,
+		historyListDigital[7].values[0],historyListDigital[7].values[1],
+		historyListDigital[7].values[2],historyListDigital[7].values[3],
+		historyListDigital[7].values[4],historyListDigital[7].values[5],
+		historyListDigital[7].values[6],historyListDigital[7].values[7],historyListDigital[7].time,
+		historyListDigital[8].values[0],historyListDigital[8].values[1],
+		historyListDigital[8].values[2],historyListDigital[8].values[3],
+		historyListDigital[8].values[4],historyListDigital[8].values[5],
+		historyListDigital[8].values[6],historyListDigital[8].values[7],historyListDigital[8].time,
+		historyListDigital[9].values[0],historyListDigital[9].values[1],
+		historyListDigital[9].values[2],historyListDigital[9].values[3],
+		historyListDigital[9].values[4],historyListDigital[9].values[5],
+		historyListDigital[9].values[6],historyListDigital[9].values[7],historyListDigital[9].time);
+		newInfo = 0;
+
+		send(APP_DIGITAL_SENSOR,bufDigital);
+		send(APP_ANALOG_SENSOR,bufAnalog);
+		send(APP_HISTORY,bufHistory);
+	}
+}
+
+void *checkAppSolicitations(void *arg){
+	if(appSolicitationCounter > 0){
+		if(appSolicitation == 0x06){
+			send(REQUEST,SET_ON_NODEMCU_LED);
+		}else if(appSolicitation == 0x07){
+			send(REQUEST,SET_OFF_NODEMCU_LED);
+		}else if(appSolicitation == 0x08){
+			convertTimeInterval();
+			char buf[10];
+			sprintf(buf,"%ld",timeSeconds);
+			send(TIME_INTERVAL,buf);
+		}
+		appSolicitation = 0;
+		appSolicitationCounter--;
+	}
+	
+}
+
+void *checkConnections(void *arg){
 	while (1){
 		testConnectionNode = 1;
 		testConnectionApp = 1;
  
 		send(REQUEST, GET_NODE_CONNECTION_STATUS);
 		send(RASP_REQUEST,GET_APP_CONNECTION_STATUS);
-		delay(1000);
+		delay(500);
 
 		if(testConnectionNode == 1){
 			connectionNode = -1;
