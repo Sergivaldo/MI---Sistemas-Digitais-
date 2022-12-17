@@ -28,9 +28,11 @@ Os botões 1 e 2 são utilizados para a percorrer para a esquerda e para a direi
 <a id="secao2"></a>
 ## Opções do menu inicial
 
-**Tela inicial**: Quando o sistema é iniciado, uma tela inicial é exibida no display lcd. A tela inicial exibe “MI - SD Problema 3” no display lcd, a partir dela podem ser utilizados os botões 1 e 2 para percorrer para as próximas opções do menu, o botão 3 não tem funcionalidade nessa tela. Uma vez que sair dessa tela, não é possível retornar para ela, portanto ela só é exibida uma vez a cada execução do sistema. 
+**Tela inicial**
 
-**Leitura: Sensor digital**: 
+ Quando o sistema é iniciado, uma tela inicial é exibida no display lcd. A tela inicial exibe “MI - SD Problema 3” no display lcd, a partir dela podem ser utilizados os botões 1 e 2 para percorrer para as próximas opções do menu, o botão 3 não tem funcionalidade nessa tela. Uma vez que sair dessa tela, não é possível retornar para ela, portanto ela só é exibida uma vez a cada execução do sistema. 
+
+**Leitura: Sensor digital**
 
 A opção de leitura dos sensores digitais permite a visualização em tempo real das medições que são realizadas periodicamente no intervalo pré definido.
 
@@ -38,7 +40,7 @@ Para acessar a medição dos sensores, o botão 3 deve ser clicado quando estive
 
 Para percorrer entre os sensores, são utilizados os botões 1 e 2, após percorrer todos os sensores no sentido horário (com o botão 2), ou percorrendo uma vez, a partir do primeiro no sentido anti horário(com o botão 1), é exibida a opção de sair desse menu, que pode ser selecionada utilizando o botão 3. 
 
-**Leitura: Sensor Analogico**:
+**Leitura: Sensor Analogico**
 
 A opção de leitura do sensor analógico permite a visualização em tempo real da medição que é realizada periodicamente no intervalo pré definido.
 
@@ -46,16 +48,16 @@ Na linha de cima do display lcd é exibida a identificação do sensor analógic
 
 utilizando os botões 1 ou 2, é exibida a opção de sair desse menu, que pode ser selecionada utilizando o botão 3. 
 
-**LED:**:
+**LED**
 
 Esta opção do menu permite ligar e desligar o LED da NodeMCU. A visualização do estado atual do LED pode ser vista na emulação da chave exibida no display. quando a chave está para a esquerda, na posição ON, o LED está ligado. Quando a chave está para a direita, na posição OFF, o LED está desligado.
 
 Para acender ou desligar o LED, deve ser pressionado o botão 3, este serve para alternar o estado atual do LED. 
 
-**Configurações**:
+**Configurações**
 
-**Status das conexões**:
+**Status das conexões**
 
-**Histórico**:
+**Histórico**
 
-**Sair**:
+**Sair**
