@@ -3,7 +3,7 @@
 
 Manual do Usuário - IHM local
 
-Este é protótipo de sistema de sensoriamento genérico montado em uma plataforma baseada na NodeMCU. O sistema é comandado pelo Single Board Computer (SBC) Orange Pi, e comunicação sem fio com um aplicativo e a NodeMCU. 
+Este é protótipo de sistema de sensoriamento genérico montado em uma plataforma baseada na NodeMCU. O sistema é comandado pelo Single Board Computer (SBC) Orange Pi e conta com um aplicativo e com uma NodeMCU, a comunicação entre eles é realizada utilizando o protocolo MQTT. 
 
 Este manual tem o intuito de orientar a utilização da IHM(Interface Homem-Máquina) local, que foi implementado na Orange Pi.
 
@@ -66,7 +66,12 @@ Após acessar este menu, os sensores digitais serão exibidos individualmente, c
 
 
 #### Status das conexões
+A opção de status da conexão permite a visualização das conexões do aplicativo e da NodeMCU com o SBC central, para acessar esse menu, deve ser pressionado o botão 3. 
+
+Após acessar este menu, a situação das comunicações serão exibidas de forma individual, onde cada tela exibe a identificação na linha de cima do display lcd, e  o status da conexão na linha de baixo, podendo ser online ou offline. Para navegar entre as exibições, devem ser utilizados os botões 1 e 2, e para sair desse menu deve ser pressionado o botão 3 na opção “sair”.
 
 #### Histórico
+
+
 
 #### Sair 
