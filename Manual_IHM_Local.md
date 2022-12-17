@@ -30,8 +30,13 @@ Os botões 1 e 2 são utilizados para a percorrer para a esquerda e para a direi
 
 **Tela inicial**: Quando o sistema é iniciado, uma tela inicial é exibida no display lcd. A tela inicial exibe “MI - SD Problema 3” no display lcd, a partir dela podem ser utilizados os botões 1 e 2 para percorrer para as próximas opções do menu, o botão 3 não tem funcionalidade nessa tela. Uma vez que sair dessa tela, não é possível retornar para ela, portanto ela só é exibida uma vez a cada execução do sistema. 
 
-
 **Leitura: Sensor digital**: 
+A opção de leitura dos sensores digitais permite a visualização em tempo real das medições que são realizadas periodicamente no intervalo pré definido.
+
+Para acessar a medição dos sensores, o botão 3 deve ser clicado quando estiver nessa tela. A medição de cada sensor é exibida de forma individual,  onde na linha de cima do display lcd é exibida a identificação do sensor, e na linha de baixo a sua respectiva medição, caso esse esse sensor esteja ativo, caso contrário, é exibida a mensagem de que ele se encontra desativado. 
+
+Para percorrer entre os sensores, são utilizados os botões 1 e 2, após percorrer todos os sensores no sentido horário (com o botão 2), ou percorrendo uma vez, a partir do primeiro no sentido anti horário(com o botão 1), é exibida a opção de sair desse menu, que pode ser selecionada utilizando o botão 3. 
+
 
 **Leitura: Sensor Analogico**:
 
