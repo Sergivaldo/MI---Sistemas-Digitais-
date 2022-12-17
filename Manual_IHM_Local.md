@@ -28,7 +28,7 @@ Os botões 1 e 2 são utilizados para a percorrer para a esquerda e para a direi
 <a id="secao2"></a>
 ## Opções do menu inicial
 
-####Tela inicial
+#### Tela inicial
 
  Quando o sistema é iniciado, uma tela inicial é exibida no display lcd. A tela inicial exibe “MI - SD Problema 3” no display lcd, a partir dela podem ser utilizados os botões 1 e 2 para percorrer para as próximas opções do menu, o botão 3 não tem funcionalidade nessa tela. Uma vez que sair dessa tela, não é possível retornar para ela, portanto ela só é exibida uma vez a cada execução do sistema. 
 
