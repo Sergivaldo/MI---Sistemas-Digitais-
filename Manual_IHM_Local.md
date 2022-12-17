@@ -55,7 +55,16 @@ Para acender ou desligar o LED, deve ser pressionado o botão 3, este serve para
 
 
 #### Configurações
+Na opção de configurações, podem ser definidos o intervalo de tempo em que os sensores serão atualizados, e os sensores que estarão ativados e desativados. Para acessar essas opções, deve ser pressionado o botão 3 enquanto estiver nesta tela. E para percorrer os submenus devem ser utilizados os botões 1 e 2, para selecionar uma opção, deve ser pressionado o botão 3. 
 
+**Ajustar intervalo:** A primeira opção que é exibida é a de “Ajustar  intervalo”. Esta opção é responsável por permitir que o usuário defina o intervalo de tempo em que os sensores realizarão uma nova medida. Para acessar o ajuste, deve ser utilizado o botão 3 nesta opção. 
+O ajuste do intervalo pode ser realizado utilizando os botões 1 e 2 para diminuir e aumentar respectivamente as barrinhas do medidor de tempo, cada barrinha é equivalente a uma unidade de tempo pré definido, podendo variar de 1 a 10 unidades, a unidade de tempo é exibida ao lado(s = segundos, m = minutos, h = horas). Após definir o intervalo, o botão 3 deve ser pressionado para confirmar e sair da tela de ajuste.
+
+**Ajustar Unidade de Tempo:** Esta opção, exibida como “Ajustar Unid. Tempo”, permite que o usuário defina a unidade de tempo que o intervalo irá seguir. Para acessar esta opção, deve ser pressionado o botão 3. 
+Para alternar a unidade de tempo devem ser utilizados os botões 1 e 2, para confirmar a opção desejada deve ser pressionado o botão 3.
+
+**Especificar Sensores Ativos:** Nesta opção é possível fazer a ativação e a desativação dos sensores que serão monitorados. Para acessar este menu, deve ser pressionado o botão 3. 
+Após acessar este menu, os sensores digitais serão exibidos individualmente, cada sensor será exibido com sua identificação na linha de cima do display e seu status de ativação na linha de baixo. Para navegar entre os sensores podem ser utilizados os botões 1 e 2, para percorrer em sentido anti horários e horário respectivamente. Para mudar o status de um sensor, deve ser pressionado o botão 3 quando ele estiver sendo exibido no display, se ele estiver ativado, quando pressionando ele será desativado, e vice-versa. Após definir os sensores, deve ser pressionado o botão 3 na opção de “sair”, para salvar a configurações e sair. 
 
 
 #### Status das conexões
