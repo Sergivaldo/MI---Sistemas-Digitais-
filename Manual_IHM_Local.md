@@ -48,7 +48,6 @@ utilizando os botões 1 ou 2, é exibida a opção de sair desse menu, que pode 
 
 **LED:**:
 
-
 Esta opção do menu permite ligar e desligar o LED da NodeMCU. A visualização do estado atual do LED pode ser vista na emulação da chave exibida no display. quando a chave está para a esquerda, na posição ON, o LED está ligado. Quando a chave está para a direita, na posição OFF, o LED está desligado.
 
 Para acender ou desligar o LED, deve ser pressionado o botão 3, este serve para alternar o estado atual do LED. 
