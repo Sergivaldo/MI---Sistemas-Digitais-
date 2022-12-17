@@ -15,6 +15,7 @@ Este manual tem o intuito de orientar a utilização da IHM(Interface Homem-Máq
 ## Seções
 
 &nbsp;&nbsp;&nbsp;[**1.** Periféricos de interação](#secao1)
+
 &nbsp;&nbsp;&nbsp;[**2.** Opções do menu inicial](#secao2)
 
 
