@@ -71,7 +71,10 @@ A opção de status da conexão permite a visualização das conexões do aplica
 Após acessar este menu, a situação das comunicações serão exibidas de forma individual, onde cada tela exibe a identificação na linha de cima do display lcd, e  o status da conexão na linha de baixo, podendo ser online ou offline. Para navegar entre as exibições, devem ser utilizados os botões 1 e 2, e para sair desse menu deve ser pressionado o botão 3 na opção “sair”.
 
 #### Histórico
+A opção do Histórico é responsável por exibir os histórico com as últimas 10 medições dos sensores digitais e do sensor analógico. Para acessá-los, o botão 3 deve ser pressionado.
 
-
+Após acessar o histórico, é possível visualizar o histórico dos sensores digitais, o histórico do sensor analógico e a opção de sair, devem ser utilizados os botões 1 e 2 para alternar entre as opções e o botão 3 para selecionar a opção desejada. Dentro da opção referente ao histórico dos sensores digitais, cada medição é exibida de forma individual, onde na linha de cima são exibidos as medições de todos os sensores digitais, do D0 ao D8 respectivamente, e na linha abaixo é exibido o número do histórico e o horário em que foi realizada a leitura. A medição dos sensores desativados são exibidas como “n”. para navegar entre os 10 históricos devem ser utilizados os botões 1 ou 2, para sair basta pressionar o botão 3 a qualquer momento. O histórico do sensor analógico utiliza os mesmos mecanismos. 
 
 #### Sair 
+Ao pressionar o botão 3 na opção “Sair”, o sistema é encerrado. 
+
