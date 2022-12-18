@@ -8,6 +8,8 @@ A Internet das Coisas (IoT) descreve a rede de objetos físicos incorporados a s
   **Jacob Santana**<br>
   **Sergivaldo Junior**
 
+Para acessar o manual do usuário, [clique aqui](https://github.com/Sergivaldo/MI_Sistemas_Digitais_Problema_3/blob/master/Manual_IHM_Local.md)
+
 ## Seções
 
 Abaixo as seções que podem ser navegadas para um maior entendimento da solução encontrada, desde as ferramentas utilizadas até os testes feitos.
@@ -21,6 +23,8 @@ Abaixo as seções que podem ser navegadas para um maior entendimento da soluç�
 &nbsp;&nbsp;&nbsp;[**4.** Testes realizados](#testes-realizados)
 
 &nbsp;&nbsp;&nbsp;[**5.** Limitações do projeto](#limitações-do-projeto)
+
+
 
 ## Protocolo MQTT
 
