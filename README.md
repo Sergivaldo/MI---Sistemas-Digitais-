@@ -12,15 +12,15 @@ A Internet das Coisas (IoT) descreve a rede de objetos físicos incorporados a s
 
 Abaixo as seções que podem ser navegadas para um maior entendimento da solução encontrada, desde as ferramentas utilizadas até os testes feitos.
 
-&nbsp;&nbsp;&nbsp;[**1.** Protocolo MQTT](#secao5)
+&nbsp;&nbsp;&nbsp;[**1.** Protocolo MQTT](#protocolo-mqtt)
 
-&nbsp;&nbsp;&nbsp;[**2.** Diagrama do projeto](#secao4)
+&nbsp;&nbsp;&nbsp;[**2.** Diagrama do projeto](#diagrama-do-projeto)
 
-&nbsp;&nbsp;&nbsp;[**4.** Metodologias e técnicas aplicadas](#secao7)
+&nbsp;&nbsp;&nbsp;[**3.** Metodologias e técnicas aplicadas](#metodologias-e-técnicas-aplicadas)
 
-&nbsp;&nbsp;&nbsp;[**5.** Testes realizados](#secao8)
+&nbsp;&nbsp;&nbsp;[**4.** Testes realizados](#testes-realizados)
 
-&nbsp;&nbsp;&nbsp;[**6.** Limitações do projeto](#secao9)
+&nbsp;&nbsp;&nbsp;[**5.** Limitações do projeto](#limitações-do-projeto)
 
 ## Protocolo MQTT
 
@@ -87,7 +87,30 @@ Tanto na Raspberry como na NodeMCU foi colocado um intervalo padrão, intervalo 
 O histórico das medições mostra os dez últimos valores dos sensores analógicos e digitais, além do horário em que foram recebidos. Uma observação a ser feita é que
 o horário pode ser registrado errado caso este, que é pego da própria SBC não esteja configurado, o que faz perder a consistência em uma parte da informação. Isso poderia ser melhorado caso o horário fosse pego através de um servidor NTP.
 
-## Mudança de estado do led da NodeMCU
+### Mudança de estado do led da NodeMCU
 
 O estado do led é mudado através de uma requisição que a Raspberry faz para a NodeMCU, no momento que a requisição chega, a NodeMCU verifica se o comando corresponde com o acendimento do led e executa a tarefa, posteriormente retornando uma resposta com o estado atual do led(Ligado ou desligado). Analisando essa funcionalidade, foi visto que esta executava corretamente, mas ainda possui problema com a unicidade, pois, como a SBC pode vir a se desconectar do Broker ou desligar, ela irá perder o estado em que o led se encontrava já que seus dados não persistem. Assim, a Raspberry Pi irá conter um dado que não corresponde com o real, já que o estado do led da estação de medição  na Raspberry inicia como apagado, mas na NodeMCU pode estar ligado, fazendo com que a veracidade das informações seja perdida. Para resolver esse problema foi implementado que ao se conectar com o broker, a SBC irá solicitar o estado do led fazendo com que o estado real seja exibido para o usuário.
 
+### Especificação dos sensores ativos
+
+Por padrão, foram colocados como ativas as portas digitais D0 e D1, já que foram estas as que possuiam sensores ligados a elas. Basicamente, quando ativada uma porta digital, a estação de medição irá verificar os valores do sensor que estiver nessa porta. Foi analisado que quando uma porta que não está sendo utilizada é ativada, por padrão será enviado o valor zero.
+
+### Teste de conexões
+
+Na implementação dessa funcionalidade foi utilizado uma thread para que a conexão fosse testada. Neste procedimento, a thread envia uma mensagem para a estação de medição e aguarda uma resposta desta. Quando uma mensagem chega, uma váriavel irá mudar o seu valor para o que indica a chegada da resposta, se o tempo limite acabar e esse valor não estiver na variável, quer dizer que nenhuma mensagem foi recebida e a nodeMCU não está conectada. Nas observações feitas, esses processo se saiu bem, indicando o status de conexão tanto da estação, quanto do aplicativo.
+
+## Limitações do projeto
+
+### Horário do histórico é o de recebimento e não da medição
+Devido a estação de medição não possuir um módulo RTC(Real Time Clock) ou acesso a um servidor de horário devido a limitações da rede, o horário presente em cada
+histórico é o de recebimento das mensagens, isso pode fazer com que o horário não seja perfeitamente preciso. Além disso, o horário da SBC no qual é utilizado não consegue se manter configurado, por que sofre das mesmas necessidades da NodeMCU, então, mesmo o configurando, no momento que a SBC é desligada, o horário correto é perdido.
+
+### IHM remota incompleta
+
+A IHM remota, no qual além de possuir todas as funcionalidades da IHM local, mostrava também um histórico no formato de gráfico temporal não foi completada, podendo utilizá-la apenas para ver o status das conexões e o estado do led.
+
+### Intervalo pequeno de tempo
+
+Apesar de poder selecionar a unidade de tempo(segundo, minuto ou hora) o valor era limitado a no máximo 10 o que para determinados sensores poderia não ser muito eficaz já que o valor necessário não estaria disponível.
+
+[Topo](#inicio)
