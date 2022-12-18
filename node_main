@@ -55,6 +55,7 @@
 #define ADDR_D6 "D6"
 #define ADDR_D7 "D7"
 
+// Declaração das funções
 void setTimeInterval(unsigned int sec);
 char getDigitalValue(String addr);
 void sendDigitalValues();
@@ -62,22 +63,30 @@ void sendAnalogValue();
 void getLedState();
 void setLedState();
 
-//Constantes e variaveis
+//usuário e senha do wifi
 const char* ssid = STASSID;
 const char* password = STAPSK;
 
+// Configurações do server MQTT
 const char* mqtt_server = "10.0.0.101";
 const char *mqtt_username = "aluno";
 const char *mqtt_password = "@luno*123";
 
+// Flag do led
 byte ledState = HIGH;
+// Flag de endereço dos sensores digitais
 String address = "D0";
+// Flags dos sensores ativos
 char activeSensors[] = {'1', '1', '0', '0', '0', '0', '0', '0'};
+// Intervalo de tempo
 unsigned int sendInterval;
 
+// Cliente wifi
 WiFiClient espClient;
+
 PubSubClient MQTT(espClient);
 
+// Função de conexão com wifi e OTA
 void connectWifi_OTA() {
   Serial.begin(9600);
   delay(10);
@@ -144,6 +153,7 @@ void reconnect_MQTT() {
   }
 }
 
+// Seta os sensores ativos fatiando a string com os dados recebidos 
 void setActiveSensors(char * str) {
   char *substr;
   substr = strtok(str, ",");
@@ -162,6 +172,7 @@ void setActiveSensors(char * str) {
 
 }
 
+// Callback para recebimento de mensagens
 void receivePackage(char* topic, byte* payload, unsigned int length) {
   String msg;
 
@@ -202,6 +213,7 @@ void receivePackage(char* topic, byte* payload, unsigned int length) {
   Serial.println();
 }
 
+// Pega um valor digital de acordo com endereço do sensor
 char getDigitalValue(String addr) {
   int value;
   char valueCh;
@@ -234,6 +246,7 @@ char getDigitalValue(String addr) {
   return valueCh;
 }
 
+// Envia todos os valores dos sensores digitais em uma string
 void sendDigitalValues() {
   int value;
   char buf[9];
@@ -251,7 +264,7 @@ void sendDigitalValues() {
   MQTT.publish(DIGITAL_SENSOR, msg);
 }
 
-
+// Envia o valor dos sensores analógios
 void sendAnalogValue() {
   int value = analogRead(A0);
   char buf[5];
@@ -259,6 +272,7 @@ void sendAnalogValue() {
   MQTT.publish(ANALOG_SENSOR, buf);
 }
 
+// Envia o estado do led 
 void sendLedState() {
   if (ledState == 1) {
     MQTT.publish(RESPONSE, LED_ON);
@@ -267,6 +281,7 @@ void sendLedState() {
   }
 }
 
+// Muda o stado do led
 void setLedState(byte state) {
   digitalWrite(LED_BUILTIN, state);
   if (state == 1) {
@@ -276,24 +291,32 @@ void setLedState(byte state) {
   }
 }
 
+// Envia todas as informações(valor dos sensores digitais e analógico)
 void sendAll() {
   sendDigitalValues();
   sendAnalogValue();
 }
 
+// Thread que será executada de acordo com o intervalo de tempo definido
 TimedAction sendAction = TimedAction(sendInterval, sendAll);
 
+// Muda o intervalo de tempo de envio das medições
 void setTimeInterval(unsigned int sec) {
   sendInterval = sec * 1000;
   sendAction.setInterval(sendInterval);
   MQTT.publish(RESPONSE, "0xFA");
 }
+
+// Configurações iniciais 
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   setLedState(1);
   setTimeInterval(3);
   connectWifi_OTA();
+  
+  // Define a configuração do servidor MQTT(endereço e porta)
   MQTT.setServer(mqtt_server, 1883);
+  // Define a função callback de recebimento de mensagens
   MQTT.setCallback(receivePackage);
 
 }
@@ -302,6 +325,7 @@ void loop() {
   if (!MQTT.connected()) {
     reconnect_MQTT();
   }
+  
   ArduinoOTA.handle();
   MQTT.loop();
   sendAction.check();
