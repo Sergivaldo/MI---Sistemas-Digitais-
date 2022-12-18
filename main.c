@@ -77,6 +77,7 @@
 #define BUTTON_2 23
 #define BUTTON_3 25
 
+// Descritor de arquivo do lcd
 int lcd;
 
 // Controles de navegação dos menus
@@ -121,6 +122,7 @@ int testConnectionApp = 0;
 int appSolicitationCounter = 0;
 char appSolicitation;
 
+// Estrutura do histórico
 typedef struct{
         char values[16];
         char time[10];
@@ -132,29 +134,44 @@ int ledState = 0;
 // Flag dos sensores digitais em uso
 char activeSensors[] = {'1','1','0','0','0','0','0','0'};
 
+// Valores das últimas medições dos sensores digitais
 char lastValueDigitalSensors[] = {'n','n','n','n','n','n','n','n'};
+// Horário das últimas medições dos sensores digitais
 char timeLastValueDigitalSensors[10];
+
+// Buffers de recebimento dos valores dos sensores
 char* bufDigitalValues;
 char* bufAnalogValue;
-char lastAnalogValue[5];
-char timeLastValueAnalogSensors[10];
-History historyListDigital[10];
-History historyListAnalog[10];
-int nextHistoryDigital = 0;
-int nextHistoryAnalog = 0;
-int newInfo = 0;
-// Funções do Cliente MQTT
 
+// Valores das últimas medições dos sensores analógicos
+char lastAnalogValue[5];
+// Horários das últimas medições dos sensores analógicos
+char timeLastValueAnalogSensors[10];
+
+// Históricos das dez ultimas medições dos sensores digitais
+History historyListDigital[10];
+
+// Históricos das dez ultimas medições dos sensores analógicos
+History historyListAnalog[10];
+
+// Índice do próximo histórico dos sensores digitais
+int nextHistoryDigital = 0;
+
+// Índice do próximo histórico dos sensores analógicos
+int nextHistoryAnalog = 0;
+
+// Flag que indica se chegou uma nova informação
+int newInfo = 0;
+
+// Estruturas do Cliente MQTT
 volatile MQTTClient_deliveryToken deliveredtoken;
 MQTTClient client;
 
 // Threads
 pthread_t stats_connection;
-pthread_t time_now;
-pthread_t checkNewInfo;
 pthread_t checkSolicitation;
-pthread_t lcdMenu;
 
+// Função que pega o tempo atual
 void getTime(char buf[]){
         //ponteiro para struct que armazena data e hora
         struct tm *timeNow;
@@ -183,11 +200,15 @@ void getTime(char buf[]){
 
 }
 
+// Função para atualizar o histórico dos sensores digitais
 void updateHistoryDigital(int next){
+	
+	// Copia o valor da ultima medição dos sensores digitais para o próximo histórico
         if(next < 10){
                 sprintf(historyListDigital[next].values,"%c,%c,%c,%c,%c,%c,%c,%c",lastValueDigitalSensors[0],lastValueDigitalSensors[1],lastValueDigitalSensors[2],lastValueDigitalSensors[3],lastValueDigitalSensors[4],lastValueDigitalSensors[5],lastValueDigitalSensors[6],lastValueDigitalSensors[7]);
                 strcpy(historyListDigital[next].time,timeLastValueDigitalSensors);
                 nextHistoryDigital++;
+	// Se o array de historicos possuir dez históricos armazenados, move os últimos nove históricos com a função memcpy
         }else{
                 memcpy(historyListDigital, &historyListDigital[1], 9*sizeof(*historyListDigital));
                 sprintf(historyListDigital[9].values,"%c,%c,%c,%c,%c,%c,%c,%c",lastValueDigitalSensors[0],lastValueDigitalSensors[1],lastValueDigitalSensors[2],lastValueDigitalSensors[3],lastValueDigitalSensors[4],lastValueDigitalSensors[5],lastValueDigitalSensors[6],lastValueDigitalSensors[7]);
@@ -195,11 +216,14 @@ void updateHistoryDigital(int next){
         }
 }
 
+// Função para atualizar o histórico dos sensores analógicos
 void updateHistoryAnalog(int next){
+	// Copia o valor da ultima medição dos sensores analógicos para o próximo histórico
         if(next<10){
                 sprintf(historyListAnalog[next].values,"%s",lastAnalogValue);
                 strcpy(historyListAnalog[next].time,timeLastValueAnalogSensors);
                 nextHistoryAnalog++;
+	// Se o array de historicos possuir dez históricos armazenados, move os últimos nove históricos com a função memcpy
         }else{
                 memcpy(historyListAnalog, &historyListAnalog[1], 9*sizeof(*historyListAnalog));
                 sprintf(historyListAnalog[next].values,"%s",lastAnalogValue);
@@ -207,11 +231,11 @@ void updateHistoryAnalog(int next){
         }
 
 }
-
+// Fatia a string recebida com o valor de todos os sensores digitais e adiciona em uma posição no array
 void setDigitalValueSensors(){
   char * substr =  malloc(50);
   substr = strtok(bufDigitalValues, ",");
-   // loop through the string to extract all other tokens
+   
   while( substr != NULL ) {
       char *pinName = malloc(2);
       strncpy(pinName, substr,2);
@@ -223,16 +247,20 @@ void setDigitalValueSensors(){
 
       substr = strtok(NULL, ",");
    }
+   // pega o horário atual
    getTime(timeLastValueDigitalSensors);
+  // atualiza o histórico
    updateHistoryDigital(nextHistoryDigital);
 }
 
+// Salva o valor da última medição do sensor analógico e atualiza o histórico
 void setAnalogValueSensors(){
         strcpy(lastAnalogValue,bufAnalogValue);
         getTime(timeLastValueAnalogSensors);
         updateHistoryAnalog(nextHistoryAnalog);
 }
 
+// Função utilizada para publicar mensagens em um tópico
 void send(char* topic, char* payload) {
     MQTTClient_message pubmsg = MQTTClient_message_initializer;
     pubmsg.payload = payload;
@@ -244,6 +272,7 @@ void send(char* topic, char* payload) {
     MQTTClient_waitForCompletion(client, token, TIMEOUT);
 }
 
+// Função callback utilizada para receber mensagens de tópicos inscritos
 int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *message)
 {
     char* msg = message -> payload;
@@ -292,6 +321,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
     return 1;
 }
 
+// Função callback que será executada caso a conexão seja perdida
 void connlost(void *context, char *cause)
 {
     printf("\nConexão perdida\n");
@@ -301,7 +331,7 @@ void connlost(void *context, char *cause)
 
 // Funções do menu lcd
 
-// Debounce
+// função utilizada para incrementar ou decrementar uma variável ao pressionar um botão
 void isPressed(int btt, int (*function)(int, int, int), int* controller, int max,int min){
         if(digitalRead(btt) == 0){
                 delay(90);
@@ -312,6 +342,7 @@ void isPressed(int btt, int (*function)(int, int, int), int* controller, int max
         }
 }
 
+// Função utilzada para entrar em outra função ao pressionar um botão
 void enter(int btt,void (*function)(void)){
         if(digitalRead(btt) == 0){
                 delay(90);
@@ -322,6 +353,7 @@ void enter(int btt,void (*function)(void)){
         }
 }
 
+// Função utilizada para trocar o estado de um sensor para ativado ou desativado
 void toggleState(int btt,int index){
         if(digitalRead(btt) == 0){
                 delay(90);
@@ -347,16 +379,6 @@ void close(int btt,int* stopFlag){
         }
 }
 
-void closeSetSensors(int btt,int* stopFlag,void (*function)(void)){
-        if(digitalRead(btt) == 0){
-                delay(90);
-                if(digitalRead(btt) == 0){
-                        *stopFlag = 1;
-                        while(digitalRead(btt) == 0);
-                }
-                function();
-        }
-}
 
 // Incrementa uma variável se não tiver atingido seu valor máximo
 int increment(int valueController, int max, int min){
@@ -388,6 +410,7 @@ void finish(){
         pthread_join(time_now,NULL);
 }
 
+// converte o intervalo em segundos com base na unidade de tempo definida
 void convertTimeInterval(){
         if(timeUnit == 'h'){
                 timeSeconds = timeInterval * 3600;
@@ -398,7 +421,7 @@ void convertTimeInterval(){
         }
 }
 
-// Ajustar o intervalo de tempo em que os sensores serão atualizados
+// Menu utilizado para ajustar o intervalo de tempo em que os sensores serão atualizados
 void setTimeInterval(){
         lcdClear(lcd);
         lcdPuts(lcd,"   INTERVALO    ");
@@ -423,6 +446,7 @@ void setTimeInterval(){
         lcdClear(lcd);
 }
 
+// Função utilizada para modificar o estado do led da estação de medição
 void setLedState(){
         if(ledState == 1){
                 send(REQUEST,SET_OFF_NODEMCU_LED);
@@ -431,6 +455,7 @@ void setLedState(){
         }
 }
 
+// Menu utilzado para mudar a unidade de tempo do intervalo de medição
 void setTimeUnit(){
         lcdClear(lcd);
         while(!stopLoopSetTimeUnit){
@@ -461,12 +486,15 @@ void setTimeUnit(){
         stopLoopSetTimeUnit = 0;
 }
 
+
+// Função que envia o estado(ativado ou desativado) de todos os sensores para a estação de medição
 void sendActiveSensors(){
         char str[50];
         sprintf(str,"D0-%c,D1-%c,D2-%c,D3-%c,D4-%c,D5-%c,D6-%c,D7-%c",activeSensors[0],activeSensors[1],activeSensors[2],activeSensors[3],activeSensors[4],activeSensors[5],activeSensors[6],activeSensors[7]);
         send(ACTIVE_SENSORS,str);
 }
 
+// Função que printa a mensagem ativado ou desativado de acordo com o estado do sensor 
 void statusSensorMessage(int index){
         if(activeSensors[index] == '1'){
                 lcdPuts(lcd,"ATIVADO         ");
@@ -475,6 +503,7 @@ void statusSensorMessage(int index){
         }
 }
 
+// Função que imprime um valor do sensor caso este esteja ativado ou a mensagem desativado caso contrário
 void valueDigitalSensor(int index){
 
         if(activeSensors[index] == '1'){
@@ -484,6 +513,7 @@ void valueDigitalSensor(int index){
         }
 }
 
+// Menu utilizado para definir o estado(ativado ou desativado) dos sensores
 void setUsedSensors(){
         while(!stopLoopSetUsedSensors){
                 switch(currentUsedSensorsOption){
@@ -575,6 +605,7 @@ void setUsedSensors(){
         lcdClear(lcd);
 }
 
+// Menu que dá acesso as configurações do sistema
 void configMenu(){
         while(!stopLoopConfigMenu){
                 switch(currentMenuIntervalOption){
@@ -626,6 +657,7 @@ void configMenu(){
         lcdClear(lcd);
 }
 
+// Menu que da acesso ao valor em tempo real dos sensores analógicos
 void analogSensorsMenu(){
         lcdClear(lcd);
         while(!stopLoopAnalogSensorsMenu){
@@ -654,7 +686,7 @@ void analogSensorsMenu(){
         currentMenuAnalogSensorOption = 1;
         lcdClear(lcd);
 }
-
+// Menu que da acesso ao valor em tempo real dos sensores digitais
 void digitalSensorsMenu(){
         while(!stopLoopDigitalSensorsMenu){
                 switch(currentMenuSensorOption){
@@ -738,6 +770,7 @@ void digitalSensorsMenu(){
         lcdClear(lcd);
 }
 
+// Menu que imprime o estado de conexão do aplicativo e da NodeMCU
 void connectionStatusMenu(){
     while(!stopLoopConnectionStatusMenu){
         switch(currentConnectionStatusOption){
@@ -781,6 +814,7 @@ void connectionStatusMenu(){
     lcdClear(lcd);
 }
 
+// Menu que da acesso ao histórico das medições dos sensores digitais
 void historyDigitalSensors(){
         lcdClear(lcd);
 
@@ -960,6 +994,7 @@ void historyDigitalSensors(){
         currentHistoryDigitalSensorOption = 1;
 }
 
+// Menu que dá acesso ao histórico dos sensores analógicos
 void historyAnalogSensors(){
         lcdClear(lcd);
 
@@ -1133,6 +1168,7 @@ void historyAnalogSensors(){
         currentHistoryAnalogSensorOption = 1;
 }
 
+// Menu com opções de histórico dos sensores
 void historyMenu(){
         while(!stopLoopHistoryMenu){
                 switch(currentHistoryMenuOption){
@@ -1170,6 +1206,7 @@ void historyMenu(){
         lcdClear(lcd);
 }
 
+//  Menu principal
 void mainMenu(){
         while(!stopLoopMainMenu){
                 switch(currentMenuOption){
@@ -1253,6 +1290,7 @@ void mainMenu(){
         }
 }
 
+// Função callback que enviará as informações dos sensores para o aplicativo
 void *sendInfo(void *arg){
         while(1){
                 if(newInfo == 1){
@@ -1314,6 +1352,7 @@ historyListDigital[9].values[6],historyListDigital[9].values[7],historyListDigit
 
 }
 
+// função callback que irá verificar se o aplicativo solicitou algo a SBC
 void *checkAppSolicitations(void *arg){
         while(1){
                 if(appSolicitationCounter > 0){
@@ -1333,6 +1372,7 @@ void *checkAppSolicitations(void *arg){
         }
 }
 
+// Função callback que checa as conexões da NodeMCU e da aplicação web
 void *checkConnections(void *arg){
         while (1){
                 testConnectionNode = 1;
@@ -1365,23 +1405,30 @@ void *checkConnections(void *arg){
 
 int main(int argc, char* argv[])
 {
+   
     int rc;
+    // Configura os pinos da SBC
     wiringPiSetup();
+    // Inicializa o lcd
     lcd = lcdInit (2, 16, 4, LCD_RS, LCD_E, LCD_D4, LCD_D5, LCD_D6, LCD_D7,0,0,0,0);
+    
+    // Define os pinos em modo de entrada
     pinMode(BUTTON_1,INPUT);
     pinMode(BUTTON_2,INPUT);
     pinMode(BUTTON_3,INPUT);
-
+	
+    // Define as configurações do cliente MQTT
     MQTTClient_connectOptions conn_opts = MQTTClient_connectOptions_initializer;
     conn_opts.username = USERNAME;
     conn_opts.password = PASSWORD;
 
-
+    // Instancia um cliente MQTT
     MQTTClient_create(&client, BROKER_ADDRESS, CLIENTID,
         MQTTCLIENT_PERSISTENCE_NONE, NULL);
     conn_opts.keepAliveInterval = 2000;
     conn_opts.cleansession = 1;
 
+    // Define as funções callback do cliente MQTT
     MQTTClient_setCallbacks(client, NULL, connlost, msgarrvd, NULL);
     if ((rc = MQTTClient_connect(client, &conn_opts)) != MQTTCLIENT_SUCCESS)
     {
@@ -1390,16 +1437,23 @@ int main(int argc, char* argv[])
     }
 
     printf("Conexão estabelecida\n\n");
+	
+    // Inscreve o cliente em tópicos no broker
     MQTTClient_subscribe(client, RESPONSE, QOS2);
     MQTTClient_subscribe(client, ANALOG_SENSOR, QOS2);
     MQTTClient_subscribe(client, DIGITAL_SENSOR, QOS2);
-        MQTTClient_subscribe(client,APP_REQUEST, QOS2);
-        MQTTClient_subscribe(client,APP_RESPONSE, QOS2);
-        MQTTClient_subscribe(client,APP_TIME_INTERVAL, QOS2);
-        MQTTClient_subscribe(client,APP_ACTIVE_SENSORS, QOS2);
+    MQTTClient_subscribe(client,APP_REQUEST, QOS2);
+    MQTTClient_subscribe(client,APP_RESPONSE, QOS2);
+    MQTTClient_subscribe(client,APP_TIME_INTERVAL, QOS2);
+    MQTTClient_subscribe(client,APP_ACTIVE_SENSORS, QOS2);
+	
+    // Cria threads para checar solicitações e o estado das conexões
     pthread_create(&stats_connection, NULL, checkConnections, NULL);
     pthread_create(&checkSolicitation,NULL, checkAppSolicitations, NULL);
+    
+    // Chama a função para executar o menu no display lcd
     mainMenu();
+    // Chama a função para finalizar o programa
     finish();
 
     return rc;
