@@ -14,11 +14,16 @@ Este manual tem o intuito de orientar a utilização da IHM(Interface Homem-Máq
 
 ## Seções
 
-&nbsp;&nbsp;&nbsp;[**1.** Periféricos de interação](#secao1)
+&nbsp;&nbsp;&nbsp;[**1.** Instalação do sistema](#secao1)
 
-&nbsp;&nbsp;&nbsp;[**2.** Opções do menu](#secao2)
+&nbsp;&nbsp;&nbsp;[**2.** Periféricos de interação](#secao2)
+
+&nbsp;&nbsp;&nbsp;[**3.** Opções do menu](#secao3)
 
 <a id="secao1"></a>
+## Instalação do sistema
+
+<a id="secao2"></a>
 ## Periféricos de interação
 Para a interação com a interface local, são utilizados 3 botões e o display lcd. 
 
@@ -26,7 +31,7 @@ Para a interação com a interface local, são utilizados 3 botões e o display 
 
 Os botões 1 e 2 são utilizados para a percorrer para a esquerda e para a direita respectivamente, enquanto o terceiro botão têm funcionalidades diferentes dependendo do menu atual.
 
-<a id="secao2"></a>
+<a id="secao3"></a>
 ## Opções do menu
 
 #### Tela inicial
