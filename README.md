@@ -56,3 +56,38 @@ Na solução feita há três clientes conectados, sendo estes a estação de med
 Acima é mostrado a organização do projeto em relação ao protocolo MQTT. A comunicação geral do sistema é feita com o uso desse protocolo. A estação de medição NodeMCU conversa através do broker com a IHM local e detentora das informações, a Raspberry Pi, e esta conversa pelo mesmo broker, mas por tópicos diferentes com a aplicação web. Dessa forma mantendo a idéia de centralização das informações dos sensores na SBC.
 No broker, será utilizado de endereços para o envio de requisições, respostas as requisições, valores dos sensores analogicos e digitais e testes de conexão, existindo tópicos exclusivos para cada um destes. Foi utilizada essa estratégia para facilitar o envio das mensagens, já que cada uma terá formatos específicos o que faria que o tratamento das mensagens se tornasse algo trabalhoso.
 
+## Metodologias e Técnicas aplicadas
+
+### Manipulação de strings
+
+Para fazer o envio das informações, foi necessário utilizar de strings. Sendo assim, algumas manipulações um pouco mais complexas foram utilizadas para
+pegar algumas informações corretamente. A situação mais importante em que essa estratégia foi utilizada, foi no envio do valor dos sensores digitais, já que
+a medição de todos os sensores são emitidas em uma única mensagem. Esses valores foram colocados no seguinte formato `D0-n,D1-n,D2-n,D3-n,D4-n,D5-n,D6-n,D7-n` 
+onde *Dx* especifica a numeração do sensor digital e o *n* o seu valor. Esse formato é bastante útil pois quando recebido na SBC, a string será fatiada e o valor de cada sensor irá para a posição em um array correspondente com seu número. Exemplo: D0 = Array\[0].
+
+### Algoritmo de fila 
+
+![Frame 1](https://user-images.githubusercontent.com/72475500/208280521-79805462-588f-4b4b-9a3a-9ac873138da4.png)
+
+O sistema permite o salvamento das últimas 10 medições, para fazer a atualização desses dados no momento que  tiver 10 históricos, foi utilizado o algoritmo de fila
+onde o primeiro a entrar é o primeiro a sair. Sendo assim, o histórico mais antigo é removido e os outros históricos são movidos, fazendo com que a 10 posição agora fique disponível para o próximo histórico.
+
+## Testes Realizados
+
+### Envio e recebimento de medições
+
+Durante o teste foi possível observar que os dados dos sensores foram recebidos corretamente na SBC. Quando pressionado um push-button(sensor digital) os dados eram recebidos fielmente, emitindo 0 quando clicado e 1 quando solto. No sensor analógico(potenciômetro) foi observado o mesmo, apesar de que ocorriam algumas variações na medição mesmo quando o periférico não era mexido e também as vezes o sensor não conseguia alcançar seu valor máximo(1024) ou mínimo(0), variando apenas entre 10 e 1020, ainda assim, esses valores correspondiam com o que a estação de medição recebia.
+
+### Intervalo de medições
+
+Tanto na Raspberry como na NodeMCU foi colocado um intervalo padrão, intervalo esse que pode ser tranquilamente modificado para outro valor. Essa modificação é feita com excelência, assim que a estação recebe o valor, ele será modificado para o novo. Durante os testes, pôde-se perceber que quando resetada a estação de medição, o valor definido para o intervalo era ignorado, o que fazia com que a medição fosse feita muito rápida, comprometendo a visualização dos valores no display lcd. Outro adendo é que o momento em que o valor do sensor é modificado, pode causar a impressão de que o intervalo esteja mais rápido, o que não é verdade, apenas o valor que foi mudado em um momento muito próximo do envio das medições.
+
+### Histórico das medições
+
+O histórico das medições mostra os dez últimos valores dos sensores analógicos e digitais, além do horário em que foram recebidos. Uma observação a ser feita é que
+o horário pode ser registrado errado caso este, que é pego da própria SBC não esteja configurado, o que faz perder a consistência em uma parte da informação. Isso poderia ser melhorado caso o horário fosse pego através de um servidor NTP.
+
+## Mudança de estado do led da NodeMCU
+
+O estado do led é mudado através de uma requisição que a Raspberry faz para a NodeMCU, no momento que a requisição chega, a NodeMCU verifica se o comando corresponde com o acendimento do led e executa a tarefa, posteriormente retornando uma resposta com o estado atual do led(Ligado ou desligado). Analisando essa funcionalidade, foi visto que esta executava corretamente, mas ainda possui problema com a unicidade, pois, como a SBC pode vir a se desconectar do Broker ou desligar, ela irá perder o estado em que o led se encontrava já que seus dados não persistem. Assim, a Raspberry Pi irá conter um dado que não corresponde com o real, já que o estado do led da estação de medição  na Raspberry inicia como apagado, mas na NodeMCU pode estar ligado, fazendo com que a veracidade das informações seja perdida. Para resolver esse problema foi implementado que ao se conectar com o broker, a SBC irá solicitar o estado do led fazendo com que o estado real seja exibido para o usuário.
+
