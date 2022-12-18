@@ -22,6 +22,8 @@ Este manual tem o intuito de orientar a utilização da IHM(Interface Homem-Máq
 ## Periféricos de interação
 Para a interação com a interface local, são utilizados 3 botões e o display lcd. 
 
+![Funky Bombul-Bojo](https://user-images.githubusercontent.com/72475500/208282067-49db5eaf-8ca6-47db-b0fd-921e982133dd.png)
+
 Os botões 1 e 2 são utilizados para a percorrer para a esquerda e para a direita respectivamente, enquanto o terceiro botão têm funcionalidades diferentes dependendo do menu atual.
 
 <a id="secao2"></a>
