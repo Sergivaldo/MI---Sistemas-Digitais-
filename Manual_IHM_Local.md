@@ -23,6 +23,15 @@ Este manual tem o intuito de orientar a utilização da IHM(Interface Homem-Máq
 <a id="secao1"></a>
 ## Instalação do sistema
 
+O sistema utiliza 3 plataformas para o seu funcionamento, sendo centralizado na Orange Pi, utilizando a NodeMCU para realizar as leituras e o aplicativo para monitoramento e configurações do sistema. As plataformas se comunicam utilizando um broker, através do protocolo MQTT.
+
+Para realizar a instalação na Orange Pi, é necessário conectá-la na mesma rede que o broker, além de instalar a biblioteca Paho-mqtt nesta placa, feito isso, basta executar o arquivo main.c presente neste repositório.
+
+Para realizar a instalação na NodeMCU, deve ser utilizada a IDE do arduino. Inicialmente, as bibliotecas PubSubClient e TimedAction na IDE do arduino. Feito isso, basta executar o arquivo node_main.c presente neste repositório.
+
+A instalação do aplicativo pode ser realizada acessando o repositório:https://github.com/Sergivaldo/IOT-Remote
+
+
 <a id="secao2"></a>
 ## Periféricos de interação
 Para a interação com a interface local, são utilizados 3 botões e o display lcd. 
